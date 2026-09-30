@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Mingle Kerala</title>
+  <meta name="description" content="Discover and connect with people from Kerala anonymously." />
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ── App Header ──────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="app-header-left">
+      <div class="app-logo">
+        <span class="text-gradient">Mingle Kerala</span>
+      </div>
+    </div>
+    <div class="app-header-right">
+      <div class="user-pill" id="userPill">
+        <span class="online-dot"></span>
+        <span id="headerUsername">Loading...</span>
+      </div>
+      <button class="btn-icon notif-bell" id="notifBtn" title="Notifications">
+        🔔
+        <span class="notif-badge" id="notifBadge">3</span>
+      </button>
+      <button class="btn-icon" id="logoutBtn" title="Logout">🚪</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+
+    <!-- ── Desktop Sidebar ──────────────────────────────── -->
+    <aside class="app-sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-item active" data-tab="discover">
+          <span class="nav-icon">🔍</span> Discover
+        </div>
+        <a href="chat.html" class="sidebar-nav-item">
+          <span class="nav-icon">💬</span> Chat
+          <span class="sidebar-badge">2</span>
+        </a>
+        <div class="sidebar-nav-item" data-tab="notifications">
+          <span class="nav-icon">🔔</span> Notifications
+          <span class="sidebar-badge">3</span>
+        </div>
+        <a href="settings.html" class="sidebar-nav-item">
+          <span class="nav-icon">⚙️</span> Settings
+        </a>
+        <div class="divider"></div>
+        <a href="safety.html" class="sidebar-nav-item">
+          <span class="nav-icon">🛡️</span> Safety Center
+        </a>
+        <div class="sidebar-nav-item" onclick="window.logout()">
+          <span class="nav-icon">🚪</span> Logout
+        </div>
+      </nav>
+
+      <!-- User district card -->
+      <div style="margin:20px 12px 0;padding:16px;background:var(--bg-surface);border:1px solid var(--border-glass);border-radius:var(--radius-md)">
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px">YOUR PROFILE</div>
+        <div id="sidebarName" style="font-weight:700;font-size:0.88rem;margin-bottom:4px">—</div>
+        <div id="sidebarDistrict" style="font-size:0.75rem;color:var(--text-muted)">📍 —</div>
+      </div>
+    </aside>
+
+    <!-- ── Main Content ──────────────────────────────────── -->
+    <main class="app-main">
+
+      <!-- Welcome Banner -->
+      <div class="glass mb-24" style="padding:20px 24px;display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(0,212,170,0.08),rgba(139,92,246,0.08));border-color:rgba(0,212,170,0.15)">
+        <div style="font-size:2rem">🌊</div>
+        <div>
+          <div style="font-weight:700;margin-bottom:2px">Welcome back, <span id="welcomeName" class="text-teal">—</span>!</div>
+          <div class="text-secondary" style="font-size:0.82rem">There are <strong style="color:var(--teal-glow)" id="onlineCount">0</strong> people online near you right now.</div>
+        </div>
+      </div>
+
+      <!-- ── People Near You (Horizontal Scroll) ──────── -->
+      <div class="mb-24">
+        <div class="section-title">
+          <h3>🌍 People Near You</h3>
+          <a href="discover.html">See all →</a>
+        </div>
+        <div class="scroll-row" id="nearbyRow">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- ── Filter Bar ────────────────────────────────── -->
+      <div class="section-title">
+        <h3>✨ Discover More</h3>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-chip active" data-filter="all">All</div>
+        <div class="filter-chip" data-filter="online">🟢 Online</div>
+        <div class="filter-chip" data-filter="district">📍 My District</div>
+      </div>
+
+      <!-- ── Discover Grid ─────────────────────────────── -->
+      <div class="discover-grid" id="discoverGrid">
+        <!-- Populated by JS -->
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── Bottom Tab Bar (Mobile) ──────────────────────── -->
+  <div class="bottom-tab-bar">
+    <div class="tab-bar-inner">
+      <div class="tab-item active" data-tab="discover">
+        <span class="tab-icon">🔍</span>
+        <span>Discover</span>
+      </div>
+      <a href="chat.html" class="tab-item">
+        <span class="tab-icon">💬</span>
+        <span>Chat</span>
+        <span class="tab-badge">2</span>
+      </a>
+      <div class="tab-item" data-tab="notifications">
+        <span class="tab-icon">🔔</span>
+        <span>Alerts</span>
+        <span class="tab-badge">3</span>
+      </div>
+      <a href="settings.html" class="tab-item">
+        <span class="tab-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" onclick="window.navigateTo('discover.html')">
+    ✨ Find Someone New
+  </button>
+
+</div><!-- /app-shell -->
+
+<!-- Notifications Modal -->
+<div class="modal-overlay" id="notifModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">🔔 Notifications</h3>
+      <button class="modal-close" onclick="window.closeModal('notifModal')">✕</button>
+    </div>
+    <div id="notifList">
+      <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-glass)">
+        <div style="font-size:1.2rem">💬</div>
+        <div><div style="font-weight:600;font-size:0.88rem">MistyRiver4821 sent you a message</div><div style="font-size:0.75rem;color:var(--text-muted)">2 minutes ago</div></div>
+      </div>
+      <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-glass)">
+        <div style="font-size:1.2rem">👋</div>
+        <div><div style="font-weight:600;font-size:0.88rem">AzureWave9043 wants to connect</div><div style="font-size:0.75rem;color:var(--text-muted)">15 minutes ago</div></div>
+      </div>
+      <div style="display:flex;gap:12px;padding:12px 0">
+        <div style="font-size:1.2rem">🌟</div>
+        <div><div style="font-weight:600;font-size:0.88rem">3 new people from Kozhikode joined</div><div style="font-size:0.75rem;color:var(--text-muted)">1 hour ago</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="js/utils.js"></script>
+<script>
+  // Auth guard
+  window.requireAuth('login.html');
+
+  const user = window.getUser();
+
+  // Populate header
+  if (user) {
+    document.getElementById('headerUsername').textContent = user.name;
+    document.getElementById('welcomeName').textContent = user.name;
+    document.getElementById('sidebarName').textContent = user.name;
+    document.getElementById('sidebarDistrict').textContent = '📍 ' + (user.district || 'Kerala');
+  }
+
+  // Online count
+  const onlineUsers = window.MOCK_USERS.filter(u => u.online).length;
+  document.getElementById('onlineCount').textContent = onlineUsers + 17; // add some buffer
+
+  // Nearby users (same district)
+  const nearbyRow = document.getElementById('nearbyRow');
+  const nearbyUsers = user
+    ? window.MOCK_USERS.filter(u => u.district === user.district).slice(0, 8)
+    : window.MOCK_USERS.slice(0, 8);
+
+  const allNearby = nearbyUsers.length > 0 ? nearbyUsers : window.MOCK_USERS.slice(0, 8);
+
+  allNearby.forEach(u => {
+    const card = document.createElement('div');
+    card.className = 'user-card-compact';
+    card.innerHTML = `
+      <div class="compact-avatar" style="background:${window.getAvatarGradient(u.name)}">
+        ${u.name.charAt(0)}
+        <span class="online-dot${u.online ? '' : ' offline'}" style="position:absolute;bottom:1px;right:1px;border:2px solid var(--bg-base)"></span>
+      </div>
+      <div class="compact-name">${u.name}</div>
+      <div class="compact-district">📍 ${u.district}</div>
+      <button class="btn btn-primary btn-sm w-full">💬 Chat</button>
+    `;
+    card.querySelector('button').addEventListener('click', () => {
+      window.storage.set('mk_chat_peer', u);
+      window.navigateTo('chat.html');
+    });
+    nearbyRow.appendChild(card);
+  });
+
+  // Discover grid
+  let currentFilter = 'all';
+  const discoverGrid = document.getElementById('discoverGrid');
+
+  function renderDiscoverGrid(filter) {
+    discoverGrid.innerHTML = '';
+    let users = [...window.MOCK_USERS];
+
+    if (filter === 'online') users = users.filter(u => u.online);
+    else if (filter === 'district' && user) users = users.filter(u => u.district === user.district);
+
+    if (users.length === 0) {
+      discoverGrid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-icon">😔</div>
+          <h3>No users found</h3>
+          <p>Try a different filter or check back later.</p>
+        </div>
+      `;
+      return;
+    }
+
+    users.forEach((u, i) => {
+      const card = window.renderUserCard(u, (peer) => {
+        window.storage.set('mk_chat_peer', peer);
+        window.navigateTo('chat.html');
+      });
+      card.style.animationDelay = `${i * 0.05}s`;
+      card.classList.add('reveal');
+      discoverGrid.appendChild(card);
+    });
+
+    window.initScrollReveal();
+  }
+
+  renderDiscoverGrid('all');
+
+  // Filter chips
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentFilter = chip.dataset.filter;
+      renderDiscoverGrid(currentFilter);
+    });
+  });
+
+  // Notifications
+  document.getElementById('notifBtn').addEventListener('click', () => {
+    window.openModal('notifModal');
+    document.getElementById('notifBadge').style.display = 'none';
+  });
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    if (confirm('Are you sure you want to logout?')) window.logout();
+  });
+</script>
+</body>
+</html>

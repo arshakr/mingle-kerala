@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Environment variables — NEVER commit these!
+.env
+.env.local
+.env.production
+
+# Prisma dev database
+prisma/dev.db
+prisma/dev.db-journal
+*.db
+*.db-wal
+*.db-shm
+
+# Next.js (not used but just in case)
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp

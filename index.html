@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mingle Kerala — Anonymous Social Discovery for Kerala Adults 18+</title>
+  <meta name="description" content="Connect anonymously with people from Kerala. 18+ verified, end-to-end encrypted, real-time chat. 14 districts. 100% private." />
+  <meta name="theme-color" content="#00d4aa" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/landing.css" />
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particleCanvas"></canvas>
+
+<!-- Rain Container -->
+<div id="rainContainer"></div>
+
+<!-- Gradient Blobs -->
+<div class="blob-container">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<!-- ── Main Content ───────────────────────────────────────── -->
+<div class="main-content">
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="navbar-brand">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="mGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#00d4aa"/>
+            <stop offset="1" stop-color="#f59e0b"/>
+          </linearGradient>
+        </defs>
+        <path d="M4 24 L4 8 L12 18 L16 12 L20 18 L28 8 L28 24" stroke="url(#mGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <span class="text-gradient">Mingle Kerala</span>
+    </a>
+    <nav class="navbar-nav">
+      <a href="privacy.html" class="btn btn-ghost btn-sm hide-mobile">Privacy</a>
+      <button class="btn btn-ghost btn-sm" id="navLoginBtn">Login</button>
+      <button class="btn btn-primary btn-sm" id="navJoinBtn">Join Free</button>
+    </nav>
+  </nav>
+
+  <!-- ── Hero ──────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="pulse-dot"></span>
+          Kerala &bull; 18+ &bull; Anonymous &bull; Secure
+        </div>
+
+        <h1>
+          Connect Anonymously.<br/>
+          <span class="text-gradient">Stay Private.</span>
+        </h1>
+
+        <p class="hero-subtitle text-malayalam">
+          കേരളത്തിലെ ആൾക്കാരെ ആരെയും അറിയിക്കാതെ കണ്ടെത്തൂ.
+        </p>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="pulse-dot"></span>
+            <strong><span id="onlineStat" data-count="12480">0</span> Online Now</strong>
+          </div>
+          <span class="stat-sep">|</span>
+          <div class="hero-stat">🗺️ <strong>14 Districts</strong></div>
+          <span class="stat-sep">|</span>
+          <div class="hero-stat">🔒 <strong>100% Anonymous</strong></div>
+        </div>
+
+        <div class="hero-cta">
+          <button class="btn btn-primary btn-xl" id="startMinglingBtn">
+            ✨ Start Mingling
+          </button>
+          <button class="btn btn-ghost btn-xl" id="howItWorksBtn">
+            How It Works ↓
+          </button>
+        </div>
+
+        <div class="trust-badges">
+          <div class="trust-badge">
+            <div class="trust-badge-icon">🔐</div>
+            End-to-End Encrypted
+          </div>
+          <div class="trust-badge">
+            <div class="trust-badge-icon">🎭</div>
+            No Real Name Needed
+          </div>
+          <div class="trust-badge">
+            <div class="trust-badge-icon">✅</div>
+            18+ Verified Only
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating UI Cards -->
+      <div class="hero-visual">
+        <!-- Chat Card -->
+        <div class="floating-card floating-card-chat">
+          <div class="fc-header">
+            <div class="fc-avatar">M</div>
+            <div>
+              <div class="fc-name">MistyRiver4821</div>
+              <div class="fc-sub">📍 Kozhikode &bull; <span style="color:#22c55e">● Online</span></div>
+            </div>
+          </div>
+          <div class="fc-bubble">Hey! How's the monsoon there? 🌧️</div>
+          <div class="fc-bubble mine">It's beautiful! Coffee time ☕</div>
+          <div style="font-size:0.68rem;color:var(--text-muted);text-align:right;margin-top:4px">✔✔ Read · 2:34 PM</div>
+        </div>
+
+        <!-- Discover Card -->
+        <div class="floating-card floating-card-discover">
+          <div style="font-size:0.78rem;font-weight:700;margin-bottom:10px;color:var(--text-secondary)">
+            🔍 People Near You
+          </div>
+          <div class="fc-user-row">
+            <div class="fc-user-mini">A</div>
+            <div style="flex:1">
+              <div style="font-size:0.78rem;font-weight:600">AzureWave9043</div>
+              <div style="font-size:0.66rem;color:var(--text-muted)">Thrissur · Gaming</div>
+            </div>
+            <span class="fc-district-tag">Online</span>
+          </div>
+          <div class="fc-user-row">
+            <div class="fc-user-mini" style="background:linear-gradient(135deg,#f59e0b,#ec4899)">G</div>
+            <div style="flex:1">
+              <div style="font-size:0.78rem;font-weight:600">GoldenTide3312</div>
+              <div style="font-size:0.66rem;color:var(--text-muted)">Kottayam · Books</div>
+            </div>
+            <span class="fc-district-tag" style="background:rgba(255,255,255,0.05);color:var(--text-muted)">Away</span>
+          </div>
+          <div class="fc-user-row">
+            <div class="fc-user-mini" style="background:linear-gradient(135deg,#8b5cf6,#ec4899)">S</div>
+            <div style="flex:1">
+              <div style="font-size:0.78rem;font-weight:600">SereneGale7712</div>
+              <div style="font-size:0.66rem;color:var(--text-muted)">Alappuzha · Music</div>
+            </div>
+            <span class="fc-district-tag">Online</span>
+          </div>
+        </div>
+
+        <!-- Privacy Shield Card -->
+        <div class="floating-card floating-card-privacy">
+          <div class="fc-shield">
+            <div class="shield-icon">🛡️</div>
+            <div class="shield-text">100% Private</div>
+            <div class="shield-sub">No phone. No name.<br/>Just vibes.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features Section ───────────────────────────────────── -->
+  <section class="features-section" id="featuresSection">
+    <div class="features-inner">
+      <div class="section-header">
+        <div class="section-label reveal">Why Mingle Kerala?</div>
+        <h2 class="reveal delay-1">Built for Kerala.<br/><span class="text-gradient">Designed for Privacy.</span></h2>
+        <p class="text-secondary mt-16 reveal delay-2" style="max-width:520px;margin-left:auto;margin-right:auto">
+          Everything you need to connect meaningfully — without revealing who you are.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <div class="feature-card reveal delay-1">
+          <div class="feature-icon" style="background:rgba(0,212,170,0.1)">🎭</div>
+          <h3>Anonymous Profile</h3>
+          <p class="text-secondary mt-8">Auto-generated usernames. No photos, no real names. Pure personality-based connections.</p>
+        </div>
+
+        <div class="feature-card reveal delay-2">
+          <div class="feature-icon" style="background:rgba(245,158,11,0.1)">🗺️</div>
+          <h3>District Filter</h3>
+          <p class="text-secondary mt-8">Find people from all 14 Kerala districts. From Kasaragod to Thiruvananthapuram.</p>
+        </div>
+
+        <div class="feature-card reveal delay-3">
+          <div class="feature-icon" style="background:rgba(139,92,246,0.1)">💬</div>
+          <h3>Private Chat</h3>
+          <p class="text-secondary mt-8">End-to-end encrypted real-time messaging with read receipts and typing indicators.</p>
+        </div>
+
+        <div class="feature-card reveal delay-4">
+          <div class="feature-icon" style="background:rgba(236,72,153,0.1)">🛡️</div>
+          <h3>AI Safety</h3>
+          <p class="text-secondary mt-8">Smart moderation system. Report abuse instantly. Emergency exit at any time.</p>
+        </div>
+
+        <div class="feature-card reveal delay-5">
+          <div class="feature-icon" style="background:rgba(0,212,170,0.1)">🇮🇳</div>
+          <h3>Malayalam Support</h3>
+          <p class="text-secondary mt-8">Full Malayalam language interface. Chat in your mother tongue comfortably.</p>
+        </div>
+
+        <div class="feature-card reveal delay-6">
+          <div class="feature-icon" style="background:rgba(245,158,11,0.1)">⚡</div>
+          <h3>Real-Time</h3>
+          <p class="text-secondary mt-8">Socket.io powered instant messaging. See who's online right now in your district.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Districts Section ──────────────────────────────────── -->
+  <section class="districts-section">
+    <div class="districts-inner">
+      <div class="section-header">
+        <div class="section-label reveal">Coverage</div>
+        <h2 class="reveal delay-1">All 14 Districts of Kerala</h2>
+        <p class="text-secondary mt-16 reveal delay-2">Every corner of God's Own Country — connected.</p>
+      </div>
+      <div class="districts-grid reveal delay-3">
+        <span class="district-chip">📍 Thiruvananthapuram</span>
+        <span class="district-chip">📍 Kollam</span>
+        <span class="district-chip">📍 Pathanamthitta</span>
+        <span class="district-chip">📍 Alappuzha</span>
+        <span class="district-chip">📍 Kottayam</span>
+        <span class="district-chip">📍 Idukki</span>
+        <span class="district-chip">📍 Ernakulam</span>
+        <span class="district-chip">📍 Thrissur</span>
+        <span class="district-chip">📍 Palakkad</span>
+        <span class="district-chip">📍 Malappuram</span>
+        <span class="district-chip">📍 Kozhikode</span>
+        <span class="district-chip">📍 Wayanad</span>
+        <span class="district-chip">📍 Kannur</span>
+        <span class="district-chip">📍 Kasaragod</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA Section ────────────────────────────────────────── -->
+  <section class="cta-section">
+    <div class="cta-glow"></div>
+    <div class="cta-inner">
+      <div class="section-label reveal">Ready?</div>
+      <h2 class="reveal delay-1">
+        Join <span class="text-gradient">12,000+</span><br/>
+        Keralites Mingling Today
+      </h2>
+      <p class="text-secondary mt-16 mb-24 reveal delay-2">
+        Free forever. No sign-up required. Just choose your district and start connecting.
+      </p>
+      <div class="reveal delay-3" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary btn-xl" onclick="window.navigateTo('age-verify.html')">
+          🚀 Get Started — It's Free
+        </button>
+        <a href="safety.html" class="btn btn-ghost btn-xl">🛡️ Safety Center</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="navbar-brand">
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="mGrad2" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00d4aa"/><stop offset="1" stop-color="#f59e0b"/>
+            </linearGradient>
+          </defs>
+          <path d="M4 24 L4 8 L12 18 L16 12 L20 18 L28 8 L28 24" stroke="url(#mGrad2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <span class="text-gradient" style="font-size:1rem">Mingle Kerala</span>
+      </div>
+
+      <nav class="footer-nav">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="safety.html">Safety Center</a>
+        <a href="login.html">Login</a>
+        <a href="age-verify.html">Join Free</a>
+      </nav>
+    </div>
+
+    <div class="footer-legal">
+      © 2024 Mingle Kerala. This platform is for adults 18+ only. 
+      By using this service you agree to our <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>.
+      For emergencies or abuse, contact <a href="safety.html">Safety Center</a>. 
+      Made with ❤️ for Kerala.
+    </div>
+  </footer>
+
+</div><!-- /main-content -->
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/rain.js"></script>
+<script src="js/landing.js"></script>
+</body>
+</html>

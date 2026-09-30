@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat — Mingle Kerala</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/chat.css" />
+</head>
+<body>
+
+<!-- Sidebar Overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="chat-shell">
+
+  <!-- Chat Body -->
+  <div class="chat-body">
+
+    <!-- ── Conversations Sidebar ──────────────────────── -->
+    <aside class="convos-sidebar" id="convosSidebar">
+      <div class="convos-header">
+        <button class="btn-icon" id="closeSidebar" style="display:none">✕</button>
+        <div class="convos-title">Messages</div>
+        <a href="dashboard.html" class="btn-icon" title="Back to Dashboard">🏠</a>
+      </div>
+
+      <div class="convos-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search conversations..." />
+      </div>
+
+      <div class="convos-list" id="convosList">
+        <!-- Populated by JS -->
+      </div>
+    </aside>
+
+    <!-- ── Chat Main ──────────────────────────────────── -->
+    <div class="chat-main">
+
+      <!-- Chat Header -->
+      <div class="chat-header" id="chatHeader">
+        <button class="btn-icon" id="openSidebarBtn">☰</button>
+
+        <div class="chat-peer-info">
+          <div class="chat-peer-name" id="peerName">Select a conversation</div>
+          <div class="chat-peer-sub">
+            <span class="online-dot" id="peerStatus"></span>
+            <span id="peerDistrict">—</span>
+          </div>
+        </div>
+
+        <div class="chat-header-actions">
+          <button class="btn-icon" id="callBtn" title="Voice call (coming soon)">📞</button>
+          <div style="position:relative">
+            <button class="btn-icon" id="menuBtn">⋯</button>
+            <div class="context-menu" id="contextMenu">
+              <div class="context-menu-item" id="blockUserBtn">🚫 Block User</div>
+              <div class="context-menu-item danger" id="reportBtn">⚠️ Report Abuse</div>
+              <div class="context-menu-item danger" id="exitBtn">🚨 Emergency Exit</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screenshot Warning -->
+      <div class="screenshot-warning">
+        📸 Screenshots are discouraged. This is a private conversation.
+      </div>
+
+      <!-- Messages Area -->
+      <div class="messages-area" id="messagesArea">
+        <div class="encrypted-notice">
+          🔐 End-to-end encrypted · Messages are private
+        </div>
+
+        <div class="date-separator">
+          <div class="date-separator-line"></div>
+          <div class="date-separator-text">Today</div>
+          <div class="date-separator-line"></div>
+        </div>
+
+        <!-- Messages injected by JS -->
+      </div>
+
+      <!-- Typing Indicator -->
+      <div class="typing-indicator" id="typingIndicator" style="display:none">
+        <div class="typing-dots">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+        <span class="typing-text" id="typingText">Someone is typing...</span>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="chat-input-area">
+        <div class="chat-input-wrap">
+          <button class="emoji-btn" id="emojiBtn" title="Insert emoji">😊</button>
+          <textarea
+            class="chat-textarea"
+            id="chatInput"
+            placeholder="Type a message... (Enter to send)"
+            rows="1"
+          ></textarea>
+          <button class="send-btn" id="sendBtn">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Emergency Exit -->
+<button class="emergency-exit" id="emergencyExit">
+  🚨 Exit
+</button>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">⚠️ Report User</h3>
+      <button class="modal-close" onclick="window.closeModal('reportModal')">✕</button>
+    </div>
+    <p class="text-secondary mb-16" style="font-size:0.85rem">Why are you reporting this user?</p>
+
+    <div class="report-option" data-reason="Harassment">
+      <div class="report-radio"></div>
+      <div>
+        <div style="font-weight:600;font-size:0.88rem">Harassment</div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">Bullying, threats, or intimidation</div>
+      </div>
+    </div>
+    <div class="report-option" data-reason="Spam">
+      <div class="report-radio"></div>
+      <div>
+        <div style="font-weight:600;font-size:0.88rem">Spam</div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">Repeated unwanted messages</div>
+      </div>
+    </div>
+    <div class="report-option" data-reason="Inappropriate">
+      <div class="report-radio"></div>
+      <div>
+        <div style="font-weight:600;font-size:0.88rem">Inappropriate Content</div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">Offensive or explicit messages</div>
+      </div>
+    </div>
+    <div class="report-option" data-reason="Underage">
+      <div class="report-radio"></div>
+      <div>
+        <div style="font-weight:600;font-size:0.88rem">Suspected Underage User</div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">User appears to be under 18</div>
+      </div>
+    </div>
+
+    <button class="btn btn-danger w-full mt-24" id="submitReport">Submit Report</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Socket.io (from CDN — replace with Render URL in production) -->
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  window.requireAuth('login.html');
+
+  const me = window.getUser();
+  const RENDER_URL = 'https://YOUR-RENDER-URL.onrender.com'; // ← replace with actual URL
+
+  // Mock conversations
+  const CONVOS = window.MOCK_USERS.slice(0, 6).map((u, i) => ({
+    peer: u,
+    lastMsg: ['Hey! How are you? 😊', 'Nice to meet you!', 'What are you up to?', 'Love the rain here 🌧️', 'Want to chat more?', 'Good morning!'][i],
+    time: ['2m', '15m', '1h', '3h', 'Yesterday', '2 days'][i],
+    unread: [2, 0, 1, 0, 0, 0][i],
+  }));
+
+  // Mock messages for demo
+  const DEMO_MESSAGES = [
+    { type: 'them', text: 'Hi there! How are you enjoying the Kerala rains? 🌧️', time: '10:23 AM', read: true },
+    { type: 'me', text: 'It\'s absolutely beautiful! Perfect weather for chai ☕', time: '10:24 AM', read: true },
+    { type: 'them', text: 'Haha true! Which district are you from?', time: '10:24 AM', read: true },
+    { type: 'me', text: 'I\'m staying in Kozhikode right now. You?', time: '10:25 AM', read: true },
+    { type: 'them', text: 'Oh nice! I\'m in Thrissur. The Pooram energy never leaves! 🎺', time: '10:26 AM', read: true },
+    { type: 'me', text: 'That sounds amazing! I\'ve always wanted to visit during Pooram 🎉', time: '10:27 AM', read: false },
+  ];
+
+  let activePeer = window.storage.get('mk_chat_peer') || window.MOCK_USERS[0];
+  let selectedReason = '';
+  let typingTimer = null;
+
+  // ── Socket.io setup (graceful degradation if offline) ──
+  let socket;
+  try {
+    socket = io(RENDER_URL, {
+      transports: ['websocket'],
+      reconnectionAttempts: 3,
+      timeout: 5000,
+    });
+
+    socket.on('connect', () => {
+      if (me) socket.emit('register_user', me.id);
+    });
+
+    socket.on('new_message', (data) => {
+      if (data.senderId === activePeer.id) {
+        appendMessage({ type: 'them', text: data.text, time: window.formatTime(new Date(data.timestamp)), read: false });
+        hideTyping();
+      }
+    });
+
+    socket.on('user_typing', ({ senderId }) => {
+      if (senderId === activePeer.id) showTyping();
+    });
+
+    socket.on('user_status_change', ({ userId, status }) => {
+      if (userId === activePeer.id) {
+        const dot = document.getElementById('peerStatus');
+        dot.classList.toggle('offline', status === 'offline');
+      }
+    });
+
+    socket.on('connect_error', () => {
+      // Silent — use mock mode
+    });
+  } catch(e) {
+    // Socket unavailable — demo mode
+  }
+
+  // ── Render sidebar conversations ─────────────────────
+  const convosList = document.getElementById('convosList');
+
+  function renderConvos(list) {
+    convosList.innerHTML = '';
+    list.forEach((c, i) => {
+      const item = document.createElement('div');
+      item.className = 'convo-item' + (c.peer.id === activePeer.id ? ' active' : '');
+      item.innerHTML = `
+        <div class="convo-avatar" style="background:${window.getAvatarGradient(c.peer.name)}">
+          ${c.peer.name.charAt(0)}
+          ${c.peer.online ? '<span class="convo-online-dot"></span>' : ''}
+        </div>
+        <div class="convo-content">
+          <div class="convo-top">
+            <span class="convo-name">${c.peer.name}</span>
+            <span class="convo-time">${c.time}</span>
+          </div>
+          <div class="convo-last">${c.lastMsg}</div>
+        </div>
+        ${c.unread ? `<div class="convo-unread">${c.unread}</div>` : ''}
+      `;
+      item.addEventListener('click', () => {
+        activePeer = c.peer;
+        loadChat(c.peer);
+        document.querySelectorAll('.convo-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        if (window.innerWidth <= 768) closeSidebar();
+      });
+      convosList.appendChild(item);
+    });
+  }
+
+  renderConvos(CONVOS);
+
+  // ── Load chat with a peer ────────────────────────────
+  function loadChat(peer) {
+    document.getElementById('peerName').textContent = peer.name;
+    const dot = document.getElementById('peerStatus');
+    dot.classList.toggle('offline', !peer.online);
+    document.getElementById('peerDistrict').textContent = `📍 ${peer.district}`;
+
+    const area = document.getElementById('messagesArea');
+    area.innerHTML = `
+      <div class="encrypted-notice">🔐 End-to-end encrypted · Messages are private</div>
+      <div class="date-separator">
+        <div class="date-separator-line"></div>
+        <div class="date-separator-text">Today</div>
+        <div class="date-separator-line"></div>
+      </div>
+    `;
+
+    // Load demo messages
+    DEMO_MESSAGES.forEach(msg => appendMessage(msg));
+    area.scrollTop = area.scrollHeight;
+  }
+
+  // Load active peer immediately
+  loadChat(activePeer);
+
+  // ── Append message bubble ────────────────────────────
+  function appendMessage({ type, text, time, read }) {
+    const area = document.getElementById('messagesArea');
+    const row = document.createElement('div');
+    row.className = `message-row ${type === 'me' ? 'mine' : ''}`;
+
+    const avatarGrad = type === 'me'
+      ? `background:linear-gradient(135deg,var(--teal-glow),var(--teal-mid))`
+      : `background:${window.getAvatarGradient(activePeer.name)}`;
+
+    const initial = type === 'me' ? (me?.name?.charAt(0) || 'M') : activePeer.name.charAt(0);
+    const ticks = type === 'me' ? (read ? '<span class="read-tick">✔✔</span>' : '✔') : '';
+
+    row.innerHTML = `
+      <div class="msg-avatar" style="${avatarGrad}">${initial}</div>
+      <div class="msg-content">
+        <div class="msg-bubble">${text}</div>
+        <div class="msg-meta">${time} ${ticks}</div>
+      </div>
+    `;
+
+    area.appendChild(row);
+    area.scrollTop = area.scrollHeight;
+  }
+
+  // ── Typing indicator ─────────────────────────────────
+  function showTyping() {
+    const el = document.getElementById('typingIndicator');
+    document.getElementById('typingText').textContent = `${activePeer.name} is typing...`;
+    el.style.display = 'flex';
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(hideTyping, 3000);
+  }
+
+  function hideTyping() {
+    document.getElementById('typingIndicator').style.display = 'none';
+  }
+
+  // ── Send message ─────────────────────────────────────
+  function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const time = window.formatTime(new Date());
+    appendMessage({ type: 'me', text, time, read: false });
+    input.value = '';
+    input.style.height = 'auto';
+
+    if (socket?.connected) {
+      socket.emit('private_message', {
+        toUserId: activePeer.id,
+        text,
+        sessionId: `${me?.id}_${activePeer.id}`,
+      });
+    }
+
+    // Demo: simulate reply after 1.5s
+    setTimeout(() => showTyping(), 800);
+    setTimeout(() => {
+      const replies = [
+        'That\'s interesting! 😊',
+        'Haha nice one!',
+        'Really? Tell me more...',
+        'I agree! The monsoon makes everything magical 🌧️',
+        'Same here! Kerala life ❤️',
+      ];
+      const reply = replies[Math.floor(Math.random() * replies.length)];
+      appendMessage({ type: 'them', text: reply, time: window.formatTime(new Date()), read: false });
+      hideTyping();
+    }, 2200);
+  }
+
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+
+  // Enter to send, Shift+Enter for newline
+  document.getElementById('chatInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+    // Emit typing event
+    if (socket?.connected) {
+      socket.emit('typing', { toUserId: activePeer.id });
+    }
+  });
+
+  // Auto-grow textarea
+  document.getElementById('chatInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+
+  // Emoji button
+  const EMOJIS = ['😊','🌧️','☕','❤️','🌊','😂','🎉','🙏','✨','🔥','💙','👋'];
+  document.getElementById('emojiBtn').addEventListener('click', () => {
+    const inp = document.getElementById('chatInput');
+    inp.value += EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+    inp.focus();
+  });
+
+  // Call button (disabled)
+  document.getElementById('callBtn').addEventListener('click', () => {
+    window.showToast('Voice calls coming soon! 🎙️', 'info');
+  });
+
+  // Context menu
+  const menuBtn = document.getElementById('menuBtn');
+  const contextMenu = document.getElementById('contextMenu');
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    contextMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', () => contextMenu.classList.remove('open'));
+
+  // Block user
+  document.getElementById('blockUserBtn').addEventListener('click', () => {
+    contextMenu.classList.remove('open');
+    window.showToast(`${activePeer.name} has been blocked. 🚫`, 'success');
+  });
+
+  // Report
+  document.getElementById('reportBtn').addEventListener('click', () => {
+    contextMenu.classList.remove('open');
+    window.openModal('reportModal');
+  });
+
+  // Emergency exit
+  document.getElementById('exitBtn').addEventListener('click', () => window.navigateTo('dashboard.html'));
+  document.getElementById('emergencyExit').addEventListener('click', () => window.navigateTo('dashboard.html'));
+
+  // Report options
+  document.querySelectorAll('.report-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.report-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      selectedReason = opt.dataset.reason;
+    });
+  });
+
+  document.getElementById('submitReport').addEventListener('click', () => {
+    if (!selectedReason) {
+      window.showToast('Please select a reason', 'warning');
+      return;
+    }
+    window.closeModal('reportModal');
+    window.showToast('Report submitted. Thank you for keeping Mingle Kerala safe. 🛡️', 'success', 4000);
+    selectedReason = '';
+    document.querySelectorAll('.report-option').forEach(o => o.classList.remove('selected'));
+  });
+
+  // Mobile sidebar
+  document.getElementById('openSidebarBtn').addEventListener('click', openSidebar);
+  document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+  const closeSidebarBtn = document.getElementById('closeSidebar');
+  if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
+
+  function openSidebar() {
+    document.getElementById('convosSidebar').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('open');
+  }
+
+  function closeSidebar() {
+    document.getElementById('convosSidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  }
+
+  // Search conversations
+  document.getElementById('searchInput').addEventListener('input', window.debounce((e) => {
+    const q = e.target.value.toLowerCase();
+    const filtered = CONVOS.filter(c =>
+      c.peer.name.toLowerCase().includes(q) || c.lastMsg.toLowerCase().includes(q)
+    );
+    renderConvos(filtered);
+  }, 250));
+
+  // Show closeSidebar on mobile
+  if (window.innerWidth <= 768) {
+    document.getElementById('closeSidebar').style.display = 'flex';
+  }
+</script>
+</body>
+</html>

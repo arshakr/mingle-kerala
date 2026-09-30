@@ -1,0 +1,26 @@
+{
+  "name": "mingle-kerala-backend",
+  "version": "1.0.0",
+  "description": "Mingle Kerala — Real-time anonymous social backend",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev":        "node server.js",
+    "start":      "node server.js",
+    "db:push":    "prisma db push",
+    "db:studio":  "prisma studio",
+    "db:seed":    "node prisma/seed.js",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0",
+    "cors":           "^2.8.5",
+    "express":        "^4.18.2",
+    "socket.io":      "^4.7.4"
+  },
+  "devDependencies": {
+    "prisma": "^5.10.0"
+  }
+}

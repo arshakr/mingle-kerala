@@ -1,0 +1,119 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ── User ──────────────────────────────────────────────────────────────────────
+model User {
+  id            String        @id @default(uuid())
+  generatedName String        @unique
+  district      String?
+  gender        String?
+  language      String?       @default("en")
+  isOnline      Boolean       @default(true)
+  lastSeen      DateTime      @default(now()) @updatedAt
+  createdAt     DateTime      @default(now())
+
+  // Relations
+  interests       UserInterest[]
+  sessionsAsUser1 ChatSession[]  @relation("SessionUser1")
+  sessionsAsUser2 ChatSession[]  @relation("SessionUser2")
+  messagesSent    Message[]
+  reportsFiled    Report[]       @relation("Reporter")
+  reportsReceived Report[]       @relation("Reported")
+  blockedUsers    Block[]        @relation("Blocker")
+  blockedBy       Block[]        @relation("Blocked")
+
+  @@index([district])
+  @@index([isOnline])
+}
+
+// ── Interest ──────────────────────────────────────────────────────────────────
+model Interest {
+  id    String         @id @default(uuid())
+  name  String         @unique
+  users UserInterest[]
+}
+
+// ── UserInterest (join table) ─────────────────────────────────────────────────
+model UserInterest {
+  user       User     @relation(fields: [userId],     references: [id], onDelete: Cascade)
+  userId     String
+  interest   Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+  interestId String
+
+  @@id([userId, interestId])
+}
+
+// ── ChatSession ───────────────────────────────────────────────────────────────
+model ChatSession {
+  id        String    @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user1    User      @relation("SessionUser1", fields: [user1Id], references: [id])
+  user2    User      @relation("SessionUser2", fields: [user2Id], references: [id])
+  messages Message[]
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([updatedAt])
+}
+
+// ── Message ───────────────────────────────────────────────────────────────────
+model Message {
+  id        String      @id @default(uuid())
+  sessionId String
+  senderId  String
+  text      String      @db.Text
+  isRead    Boolean     @default(false)
+  readAt    DateTime?
+  createdAt DateTime    @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender  User        @relation(fields: [senderId],  references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@index([senderId])
+}
+
+// ── Report ────────────────────────────────────────────────────────────────────
+model Report {
+  id         String   @id @default(uuid())
+  reporterId String
+  reportedId String
+  reason     String   // HARASSMENT | SPAM | INAPPROPRIATE | UNDERAGE | OTHER
+  details    String?  @db.Text
+  status     String   @default("PENDING") // PENDING | REVIEWED | ACTIONED | DISMISSED
+  createdAt  DateTime @default(now())
+  reviewedAt DateTime?
+
+  reporter User @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported User @relation("Reported", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ── Block ─────────────────────────────────────────────────────────────────────
+model Block {
+  id        String   @id @default(uuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+}

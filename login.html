@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Your Profile — Mingle Kerala</title>
+  <meta name="description" content="Set up your anonymous profile on Mingle Kerala. Choose your district, interests, and get your unique anonymous username." />
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="css/global.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 24px 80px;
+      position: relative;
+    }
+
+    .login-bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+    }
+    .lb-1 { width: 600px; height: 600px; background: rgba(0,212,170,0.07); top: -200px; right: -200px; }
+    .lb-2 { width: 500px; height: 500px; background: rgba(139,92,246,0.07); bottom: -100px; left: -100px; }
+
+    .login-wrap {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 560px;
+      margin-top: 20px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-header .logo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .login-card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 36px 32px;
+    }
+
+    /* Step Progress */
+    .step-progress {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .step-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--border-glass);
+      transition: all 0.3s ease;
+    }
+
+    .step-dot.active {
+      background: var(--teal-glow);
+      box-shadow: 0 0 10px rgba(0,212,170,0.5);
+      transform: scale(1.3);
+    }
+
+    .step-dot.done {
+      background: var(--teal-mid);
+    }
+
+    .step-line {
+      flex: 1;
+      max-width: 60px;
+      height: 2px;
+      background: var(--border-glass);
+      border-radius: 1px;
+      transition: background 0.3s ease;
+    }
+
+    .step-line.done { background: var(--teal-glow); }
+
+    /* Step content */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; animation: fadeInUp 0.4s ease forwards; }
+
+    .step-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    /* District grid */
+    .districts-select-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .district-select-chip {
+      padding: 10px 14px;
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--bg-surface);
+      text-align: left;
+    }
+
+    .district-select-chip:hover {
+      border-color: rgba(0,212,170,0.4);
+      color: var(--teal-glow);
+    }
+
+    .district-select-chip.selected {
+      background: rgba(0,212,170,0.1);
+      border-color: var(--teal-glow);
+      color: var(--teal-glow);
+      font-weight: 600;
+    }
+
+    /* Gender buttons */
+    .gender-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .gender-btn {
+      padding: 20px 12px;
+      border: 2px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: var(--bg-surface);
+    }
+
+    .gender-btn:hover {
+      border-color: rgba(0,212,170,0.4);
+    }
+
+    .gender-btn.selected {
+      border-color: var(--teal-glow);
+      background: rgba(0,212,170,0.08);
+    }
+
+    .gender-icon { font-size: 2rem; margin-bottom: 8px; }
+    .gender-label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+    .gender-btn.selected .gender-label { color: var(--teal-glow); }
+
+    /* Interests grid */
+    .interests-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .interest-select-chip {
+      padding: 8px 16px;
+      border: 1px solid var(--border-glass);
+      border-radius: 100px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--bg-surface);
+    }
+
+    .interest-select-chip:hover {
+      border-color: rgba(0,212,170,0.4);
+      color: var(--text-primary);
+    }
+
+    .interest-select-chip.selected {
+      background: rgba(0,212,170,0.12);
+      border-color: var(--teal-glow);
+      color: var(--teal-glow);
+    }
+
+    /* Username display */
+    .username-display {
+      background: rgba(0,212,170,0.06);
+      border: 1px solid rgba(0,212,170,0.2);
+      border-radius: var(--radius-lg);
+      padding: 20px 20px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .username-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .username-text {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--teal-glow), var(--gold-glow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    .regen-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--teal-glow);
+      cursor: pointer;
+      background: none;
+      border: 1px solid rgba(0,212,170,0.2);
+      border-radius: 100px;
+      padding: 4px 12px;
+      transition: all 0.2s ease;
+    }
+
+    .regen-btn:hover { background: rgba(0,212,170,0.08); }
+
+    /* Navigation buttons */
+    .step-nav {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    /* Language toggle */
+    .lang-toggle {
+      position: fixed;
+      top: 20px; right: 20px;
+      z-index: 100;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lang-toggle:hover {
+      border-color: var(--teal-glow);
+      color: var(--teal-glow);
+    }
+
+    @media (max-width: 480px) {
+      .login-card { padding: 24px 20px; }
+      .districts-select-grid { grid-template-columns: 1fr; }
+      .gender-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-bg-blob lb-1"></div>
+<div class="login-bg-blob lb-2"></div>
+
+<!-- Language Toggle -->
+<button class="lang-toggle" id="langToggle">EN / ഭാഷ</button>
+
+<div class="login-wrap">
+  <div class="login-header">
+    <a href="index.html" class="logo-link">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+        <defs><linearGradient id="lg1" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#00d4aa"/><stop offset="1" stop-color="#f59e0b"/>
+        </linearGradient></defs>
+        <path d="M4 24 L4 8 L12 18 L16 12 L20 18 L28 8 L28 24" stroke="url(#lg1)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <span class="text-gradient">Mingle Kerala</span>
+    </a>
+    <h1 style="font-size:1.6rem">Create Your <span class="text-gradient">Anonymous Profile</span></h1>
+    <p class="text-secondary" style="font-size:0.85rem;margin-top:6px">No real name. No phone. Just vibes. 🌊</p>
+  </div>
+
+  <div class="login-card">
+    <!-- Progress Dots -->
+    <div class="step-progress">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-dot" id="dot2"></div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-dot" id="dot3"></div>
+    </div>
+
+    <!-- ── Step 1: District ──────────────────────────────── -->
+    <div class="step-panel active" id="step1">
+      <div class="step-title">📍 Choose Your District</div>
+      <div class="step-desc">Where in Kerala are you from?</div>
+
+      <div class="districts-select-grid" id="districtGrid">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="step-nav">
+        <button class="btn btn-primary w-full" id="step1Next">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ── Step 2: Gender ────────────────────────────────── -->
+    <div class="step-panel" id="step2">
+      <div class="step-title">👤 Your Gender</div>
+      <div class="step-desc">Optional — helps with discovery filters.</div>
+
+      <div class="gender-grid">
+        <div class="gender-btn" data-gender="Male">
+          <div class="gender-icon">👨</div>
+          <div class="gender-label">Male</div>
+        </div>
+        <div class="gender-btn" data-gender="Female">
+          <div class="gender-icon">👩</div>
+          <div class="gender-label">Female</div>
+        </div>
+        <div class="gender-btn" data-gender="Other">
+          <div class="gender-icon">🌈</div>
+          <div class="gender-label">Prefer not to say</div>
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="step2Back" style="flex:1">← Back</button>
+        <button class="btn btn-primary" id="step2Next" style="flex:2">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ── Step 3: Interests & Username ─────────────────── -->
+    <div class="step-panel" id="step3">
+      <div class="step-title">🎯 Your Interests</div>
+      <div class="step-desc">Pick up to 5 topics you love.</div>
+
+      <div class="interests-grid" id="interestsGrid">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="username-display">
+        <div class="username-label">Your anonymous name</div>
+        <div class="username-text" id="usernameDisplay">Loading...</div>
+        <button class="regen-btn" id="regenBtn">🔄 Regenerate</button>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="step3Back" style="flex:1">← Back</button>
+        <button class="btn btn-primary" id="finishBtn" style="flex:2">🚀 Start Mingling!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="js/utils.js"></script>
+<script>
+  // Guard — must be age verified
+  if (localStorage.getItem('mk_age_verified') !== 'true') {
+    window.location.href = 'age-verify.html';
+  }
+
+  // If already logged in, go to dashboard
+  if (window.checkAuth()) {
+    window.location.href = 'dashboard.html';
+  }
+
+  const INTERESTS = [
+    '🎵 Music','🎬 Movies','🍛 Food','✈️ Travel','⚽ Sports',
+    '📚 Books','🎮 Gaming','🎨 Art','🌿 Nature','💻 Tech',
+    '👗 Fashion','🍳 Cooking'
+  ];
+
+  let currentStep = 1;
+  let selectedDistrict = '';
+  let selectedGender = '';
+  let selectedInterests = [];
+  let currentUsername = window.generateUsername();
+
+  // Render district grid
+  const districtGrid = document.getElementById('districtGrid');
+  window.KERALA_DISTRICTS.forEach(d => {
+    const chip = document.createElement('button');
+    chip.className = 'district-select-chip';
+    chip.textContent = '📍 ' + d;
+    chip.dataset.district = d;
+    chip.addEventListener('click', () => {
+      districtGrid.querySelectorAll('.district-select-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedDistrict = d;
+    });
+    districtGrid.appendChild(chip);
+  });
+
+  // Render interests
+  const interestsGrid = document.getElementById('interestsGrid');
+  INTERESTS.forEach(interest => {
+    const chip = document.createElement('div');
+    chip.className = 'interest-select-chip';
+    chip.textContent = interest;
+    chip.addEventListener('click', () => {
+      const cleanName = interest.replace(/^[^\w]+/, '').replace(/^\S+\s/, '');
+      if (chip.classList.contains('selected')) {
+        chip.classList.remove('selected');
+        selectedInterests = selectedInterests.filter(i => i !== cleanName);
+      } else {
+        if (selectedInterests.length >= 5) {
+          window.showToast('Max 5 interests allowed', 'warning');
+          return;
+        }
+        chip.classList.add('selected');
+        selectedInterests.push(cleanName);
+      }
+    });
+    interestsGrid.appendChild(chip);
+  });
+
+  // Username
+  document.getElementById('usernameDisplay').textContent = currentUsername;
+  document.getElementById('regenBtn').addEventListener('click', () => {
+    currentUsername = window.generateUsername();
+    document.getElementById('usernameDisplay').textContent = currentUsername;
+    const el = document.getElementById('usernameDisplay');
+    el.style.transform = 'scale(0.9)';
+    setTimeout(() => el.style.transform = 'scale(1)', 150);
+  });
+
+  // Gender buttons
+  document.querySelectorAll('.gender-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedGender = btn.dataset.gender;
+    });
+  });
+
+  function showStep(n) {
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+
+    // Update progress dots
+    for (let i = 1; i <= 3; i++) {
+      const dot = document.getElementById('dot' + i);
+      dot.classList.remove('active', 'done');
+      if (i < n)     dot.classList.add('done');
+      else if (i===n) dot.classList.add('active');
+    }
+    for (let i = 1; i <= 2; i++) {
+      const line = document.getElementById('line' + i);
+      line.classList.toggle('done', i < n);
+    }
+    currentStep = n;
+  }
+
+  // Step 1 → 2
+  document.getElementById('step1Next').addEventListener('click', () => {
+    if (!selectedDistrict) {
+      window.showToast('Please select your district', 'warning');
+      return;
+    }
+    showStep(2);
+  });
+
+  // Step 2 ← Back
+  document.getElementById('step2Back').addEventListener('click', () => showStep(1));
+
+  // Step 2 → 3
+  document.getElementById('step2Next').addEventListener('click', () => {
+    if (!selectedGender) selectedGender = 'Other'; // default
+    showStep(3);
+  });
+
+  // Step 3 ← Back
+  document.getElementById('step3Back').addEventListener('click', () => showStep(2));
+
+  // Finish
+  document.getElementById('finishBtn').addEventListener('click', () => {
+    if (selectedInterests.length === 0) {
+      window.showToast('Pick at least one interest', 'warning');
+      return;
+    }
+
+    const user = {
+      id: 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      name: currentUsername,
+      district: selectedDistrict,
+      gender: selectedGender,
+      interests: selectedInterests,
+      createdAt: new Date().toISOString(),
+    };
+
+    window.storage.set('mk_user', user);
+    window.showToast('Welcome to Mingle Kerala! 🌊', 'success');
+    setTimeout(() => window.navigateTo('dashboard.html'), 800);
+  });
+
+  // Language toggle (demo)
+  let lang = 'en';
+  document.getElementById('langToggle').addEventListener('click', () => {
+    lang = lang === 'en' ? 'ml' : 'en';
+    document.getElementById('langToggle').textContent = lang === 'en' ? 'EN / ഭാഷ' : 'ML / Language';
+    window.showToast(lang === 'ml' ? 'Malayalam mode coming soon!' : 'English mode active', 'info');
+  });
+</script>
+</body>
+</html>

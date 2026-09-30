@@ -1,0 +1,34 @@
+{
+  "name": "Mingle Kerala",
+  "short_name": "Mingle",
+  "description": "Anonymous social discovery for Kerala adults 18+",
+  "start_url": "/mingle-kerala/",
+  "scope": "/mingle-kerala/",
+  "display": "standalone",
+  "background_color": "#050b12",
+  "theme_color": "#00d4aa",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["social", "lifestyle"],
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Discover People",
+      "short_name": "Discover",
+      "description": "Find people from Kerala",
+      "url": "/mingle-kerala/discover.html",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Open Chat",
+      "short_name": "Chat",
+      "description": "View your messages",
+      "url": "/mingle-kerala/chat.html",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

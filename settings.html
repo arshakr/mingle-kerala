@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — Mingle Kerala</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-header-left">
+    <a href="dashboard.html" class="back-btn">← Dashboard</a>
+    <div class="app-logo" style="margin-left:12px"><span class="text-gradient">Settings</span></div>
+  </div>
+  <div class="app-header-right">
+    <div class="user-pill">
+      <span class="online-dot"></span>
+      <span id="headerUsername">—</span>
+    </div>
+  </div>
+</header>
+
+<div style="max-width:1200px;margin:0 auto;padding:24px" class="app-body">
+  <aside class="app-sidebar">
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="sidebar-nav-item"><span class="nav-icon">🔍</span> Discover</a>
+      <a href="chat.html"      class="sidebar-nav-item"><span class="nav-icon">💬</span> Chat</a>
+      <div class="sidebar-nav-item active"><span class="nav-icon">⚙️</span> Settings</div>
+      <div class="divider"></div>
+      <a href="safety.html"   class="sidebar-nav-item"><span class="nav-icon">🛡️</span> Safety Center</a>
+      <div class="sidebar-nav-item" onclick="window.logout()"><span class="nav-icon">🚪</span> Logout</div>
+    </nav>
+  </aside>
+
+  <main class="app-main">
+    <div class="settings-layout">
+
+      <!-- ── Profile Section ───────────────────────────── -->
+      <div class="settings-section">
+        <div class="settings-section-header">👤 Profile</div>
+
+        <!-- Username -->
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Anonymous Username</div>
+            <div class="settings-item-desc" id="usernameDisplay">Loading...</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="regenUsername">🔄 Regenerate</button>
+        </div>
+
+        <!-- District -->
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">District</div>
+            <div class="settings-item-desc" id="districtDisplay">Loading...</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="changeDistrictBtn">Change</button>
+        </div>
+
+        <!-- Interests -->
+        <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:12px">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Interests</div>
+            <div class="settings-item-desc">Tap to update what you're into</div>
+          </div>
+          <div class="interests-tags" id="interestsDisplay"></div>
+          <button class="btn btn-ghost btn-sm" id="editInterestsBtn">✏️ Edit Interests</button>
+        </div>
+      </div>
+
+      <!-- ── Privacy Section ───────────────────────────── -->
+      <div class="settings-section">
+        <div class="settings-section-header">🔒 Privacy</div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Show Online Status</div>
+            <div class="settings-item-desc">Others can see when you're active</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="onlineStatusToggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Allow Message Requests</div>
+            <div class="settings-item-desc">Receive messages from new users</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="msgRequestToggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Anonymous Mode</div>
+            <div class="settings-item-desc">Appear as a ghost — fully invisible</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="anonModeToggle" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- ── Notifications ─────────────────────────────── -->
+      <div class="settings-section">
+        <div class="settings-section-header">🔔 Notifications</div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Browser Notifications</div>
+            <div class="settings-item-desc">Get notified when someone messages you</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="notifToggle" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- ── About ─────────────────────────────────────── -->
+      <div class="settings-section">
+        <div class="settings-section-header">ℹ️ About</div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Version</div>
+            <div class="settings-item-desc">Mingle Kerala v1.0.0</div>
+          </div>
+        </div>
+
+        <a href="privacy.html" class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Privacy Policy</div>
+          </div>
+          <span class="text-muted">→</span>
+        </a>
+
+        <a href="terms.html" class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Terms of Service</div>
+          </div>
+          <span class="text-muted">→</span>
+        </a>
+
+        <a href="safety.html" class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Safety Center</div>
+          </div>
+          <span class="text-muted">→</span>
+        </a>
+      </div>
+
+      <!-- ── Danger Zone ───────────────────────────────── -->
+      <div class="settings-section" style="border-color:rgba(239,68,68,0.2)">
+        <div class="settings-section-header" style="color:#ef4444">⚠️ Danger Zone</div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Delete My Account</div>
+            <div class="settings-item-desc">Permanently removes all your data. Cannot be undone.</div>
+          </div>
+          <button class="btn btn-danger btn-sm" id="deleteAccountBtn">Delete</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Change District Modal -->
+<div class="modal-overlay" id="districtModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">📍 Change District</h3>
+      <button class="modal-close" onclick="window.closeModal('districtModal')">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:300px;overflow-y:auto" id="districtModalGrid"></div>
+    <button class="btn btn-primary w-full mt-16" id="saveDistrictBtn">Save</button>
+  </div>
+</div>
+
+<!-- Edit Interests Modal -->
+<div class="modal-overlay" id="interestsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">🎯 Edit Interests</h3>
+      <button class="modal-close" onclick="window.closeModal('interestsModal')">✕</button>
+    </div>
+    <p class="text-secondary mb-16" style="font-size:0.82rem">Pick up to 5 interests</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px" id="interestModalChips"></div>
+    <button class="btn btn-primary w-full mt-24" id="saveInterestsBtn">Save Interests</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="js/utils.js"></script>
+<script>
+  window.requireAuth('login.html');
+
+  let user = window.getUser();
+
+  function refreshUI() {
+    document.getElementById('headerUsername').textContent = user.name;
+    document.getElementById('usernameDisplay').textContent = user.name;
+    document.getElementById('districtDisplay').textContent = '📍 ' + (user.district || 'Not set');
+
+    const tagsEl = document.getElementById('interestsDisplay');
+    tagsEl.innerHTML = (user.interests || []).map(i => `<span class="interest-chip active">${i}</span>`).join('');
+  }
+
+  refreshUI();
+
+  // Regenerate username
+  document.getElementById('regenUsername').addEventListener('click', () => {
+    const newName = window.generateUsername();
+    user.name = newName;
+    window.storage.set('mk_user', user);
+    refreshUI();
+    window.showToast(`New name: ${newName} 🎭`, 'success');
+  });
+
+  // Change district modal
+  const districtGrid = document.getElementById('districtModalGrid');
+  let tempDistrict = user.district;
+
+  window.KERALA_DISTRICTS.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'district-select-chip' + (d === user.district ? ' selected' : '');
+    btn.textContent = '📍 ' + d;
+    btn.addEventListener('click', () => {
+      districtGrid.querySelectorAll('.district-select-chip').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      tempDistrict = d;
+    });
+    districtGrid.appendChild(btn);
+  });
+
+  document.getElementById('changeDistrictBtn').addEventListener('click', () => window.openModal('districtModal'));
+
+  document.getElementById('saveDistrictBtn').addEventListener('click', () => {
+    user.district = tempDistrict;
+    window.storage.set('mk_user', user);
+    refreshUI();
+    window.closeModal('districtModal');
+    window.showToast('District updated! 📍', 'success');
+  });
+
+  // Edit interests modal
+  const INTERESTS = ['Music','Movies','Food','Travel','Sports','Books','Gaming','Art','Nature','Tech','Fashion','Cooking'];
+  const interestChipsEl = document.getElementById('interestModalChips');
+  let tempInterests = [...(user.interests || [])];
+
+  INTERESTS.forEach(i => {
+    const chip = document.createElement('div');
+    chip.className = 'interest-select-chip' + (tempInterests.includes(i) ? ' selected' : '');
+    chip.textContent = i;
+    chip.style.cssText = 'padding:8px 16px;border:1px solid var(--border-glass);border-radius:100px;font-size:0.82rem;cursor:pointer;transition:all 0.2s;background:var(--bg-surface);';
+    if (tempInterests.includes(i)) chip.style.cssText += 'background:rgba(0,212,170,0.12);border-color:var(--teal-glow);color:var(--teal-glow);';
+    chip.addEventListener('click', () => {
+      if (tempInterests.includes(i)) {
+        tempInterests = tempInterests.filter(x => x !== i);
+        chip.style.cssText = 'padding:8px 16px;border:1px solid var(--border-glass);border-radius:100px;font-size:0.82rem;cursor:pointer;transition:all 0.2s;background:var(--bg-surface);color:var(--text-secondary);';
+      } else {
+        if (tempInterests.length >= 5) { window.showToast('Max 5 interests', 'warning'); return; }
+        tempInterests.push(i);
+        chip.style.cssText = 'padding:8px 16px;border:1px solid var(--teal-glow);border-radius:100px;font-size:0.82rem;cursor:pointer;transition:all 0.2s;background:rgba(0,212,170,0.12);color:var(--teal-glow);';
+      }
+    });
+    interestChipsEl.appendChild(chip);
+  });
+
+  document.getElementById('editInterestsBtn').addEventListener('click', () => window.openModal('interestsModal'));
+
+  document.getElementById('saveInterestsBtn').addEventListener('click', () => {
+    if (tempInterests.length === 0) { window.showToast('Pick at least one interest', 'warning'); return; }
+    user.interests = tempInterests;
+    window.storage.set('mk_user', user);
+    refreshUI();
+    window.closeModal('interestsModal');
+    window.showToast('Interests updated! 🎯', 'success');
+  });
+
+  // Privacy toggles (persist in localStorage)
+  const prefs = window.storage.get('mk_prefs') || { onlineStatus: true, msgRequests: true, anonMode: false, notifs: false };
+
+  document.getElementById('onlineStatusToggle').checked = prefs.onlineStatus;
+  document.getElementById('msgRequestToggle').checked   = prefs.msgRequests;
+  document.getElementById('anonModeToggle').checked     = prefs.anonMode;
+  document.getElementById('notifToggle').checked        = prefs.notifs;
+
+  function savePrefs() { window.storage.set('mk_prefs', prefs); }
+
+  document.getElementById('onlineStatusToggle').addEventListener('change', (e) => { prefs.onlineStatus = e.target.checked; savePrefs(); window.showToast(e.target.checked ? 'Online status visible' : 'Online status hidden', 'info'); });
+  document.getElementById('msgRequestToggle').addEventListener('change', (e)   => { prefs.msgRequests = e.target.checked; savePrefs(); });
+  document.getElementById('anonModeToggle').addEventListener('change', (e)     => { prefs.anonMode = e.target.checked; savePrefs(); window.showToast(e.target.checked ? '👻 Ghost mode ON' : 'Ghost mode off', 'info'); });
+  document.getElementById('notifToggle').addEventListener('change', (e) => {
+    if (e.target.checked) {
+      Notification.requestPermission().then(p => {
+        prefs.notifs = p === 'granted';
+        e.target.checked = prefs.notifs;
+        savePrefs();
+        window.showToast(prefs.notifs ? 'Notifications enabled! 🔔' : 'Permission denied', prefs.notifs ? 'success' : 'error');
+      });
+    } else {
+      prefs.notifs = false;
+      savePrefs();
+    }
+  });
+
+  // Delete account
+  document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+    if (confirm('Are you absolutely sure? This will permanently delete all your data.')) {
+      localStorage.clear();
+      window.showToast('Account deleted. Goodbye! 👋', 'info');
+      setTimeout(() => window.navigateTo('index.html'), 1500);
+    }
+  });
+</script>
+</body>
+</html>

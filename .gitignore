@@ -1,0 +1,19 @@
+# Mingle Kerala — Root .gitignore
+
+# Backend dependencies & secrets
+next-backend/node_modules/
+next-backend/.env
+next-backend/prisma/dev.db
+next-backend/prisma/dev.db-journal
+next-backend/*.db
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
