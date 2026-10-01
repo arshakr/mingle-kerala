@@ -113,6 +113,8 @@ mingle-kerala/
 
 The root `render.yaml` defines the API service. Create a Blueprint in Render from the repository and add pooled `DATABASE_URL`, direct `DIRECT_URL`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`, and a cryptographically random `AUTH_SECRET` (at least 32 bytes) in the Render dashboard. Gmail SMTP uses `smtp.gmail.com`, port `465`, with secure TLS; `SMTP_PASS` must be a Google App Password (requires 2-Step Verification), not your normal Gmail password. Set `EMAIL_FROM` to the same Gmail address as `SMTP_USER`. Keep credentials in provider dashboards only. Gmail has sending limits and is not intended for bulk email.
 
+**Render Free limitation:** Free web services block outbound traffic on SMTP ports `25`, `465`, and `587`, so Gmail SMTP cannot send from a Render Free service. Use a Render plan that permits SMTP egress or deploy the backend on a host that allows it. Free hosting with no custom sending domain may require a different email provider and setup.
+
 ### 3. Database → Neon.tech
 
 1. Create account at [neon.tech](https://neon.tech)

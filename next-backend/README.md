@@ -25,4 +25,6 @@ The repository root contains the Render Blueprint and GitHub Pages workflow. Pro
 
 For Gmail, use `smtp.gmail.com`, port `465`, and secure TLS. `SMTP_USER` is your full Gmail address; `SMTP_PASS` is a Google App Password, not your normal account password. App Passwords require 2-Step Verification on the Google account. Set `EMAIL_FROM` to that same Gmail address (optionally formatted as `Mingle Kerala <you@gmail.com>`). Gmail has sending limits and is intended here as a small-project SMTP option, not a bulk mailing service.
 
+**Render Free limitation:** Free web services block outbound traffic on SMTP ports `25`, `465`, and `587`, so Gmail SMTP cannot send from a Render Free service. Use a Render plan that permits SMTP egress or host the backend somewhere that allows it.
+
 The Render pre-deploy step pushes the Prisma schema to the configured database. Store all credentials in the provider dashboard; never commit them to the repository.
