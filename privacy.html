@@ -30,7 +30,7 @@
 
 <div class="legal-page">
   <h1>Privacy Policy</h1>
-  <div class="last-updated">Last updated: October 1, 2024</div>
+  <div class="last-updated">Last updated: September 30, 2026</div>
 
   <p>
     At Mingle Kerala, your privacy is not just a legal formality — it is the core principle that everything we build is designed around. We created this platform specifically to allow adults in Kerala to connect anonymously, and we take that responsibility seriously.
@@ -39,32 +39,30 @@
   <h2>1. Information We Collect</h2>
 
   <h3>1.1 Information You Provide</h3>
-  <p>When you create a profile on Mingle Kerala, we collect only the minimal information necessary:</p>
+  <p>When you sign in and create a profile, we collect the information needed to provide the service:</p>
   <ul>
-    <li><strong>Auto-generated username</strong> — randomly created, not linked to your real identity</li>
-    <li><strong>District</strong> — the Kerala district you choose (optional)</li>
-    <li><strong>Gender</strong> — optionally provided for discovery filters</li>
-    <li><strong>Interests</strong> — topics you're interested in, for better matching</li>
+    <li><strong>Email address</strong> — used to send sign-in links and recover access to your profile; it is not displayed to other users</li>
+    <li><strong>Self-declared age confirmation</strong> — the time you confirmed you are 18 or older</li>
+    <li><strong>Anonymous username, district, gender option, language, and interests</strong> — used for your profile and discovery</li>
+    <li><strong>Account and session timestamps</strong> — used to maintain sign-in and online status</li>
   </ul>
-  <p>We do <strong>not</strong> collect your real name, phone number, email address, government ID, or any other personally identifiable information (PII).</p>
+  <p>We do <strong>not</strong> ask for your real name, phone number, or government ID. Your email address is personal data and is stored with your account; it is not included in public profile responses.</p>
 
   <h3>1.2 Automatically Collected Information</h3>
   <ul>
-    <li><strong>Device information</strong>: Browser type, device type (mobile/desktop), operating system version</li>
-    <li><strong>Usage data</strong>: Features used, time spent, pages visited — anonymized and aggregated</li>
-    <li><strong>Connection data</strong>: IP address (used only for fraud prevention, not stored long-term)</li>
-    <li><strong>LocalStorage data</strong>: Your profile preferences stored locally on your device</li>
+    <li><strong>Connection data</strong>: A keyed hash of the requesting IP address, temporarily used to limit sign-in-link abuse; raw IP addresses are not stored in the profile</li>
+    <li><strong>LocalStorage data</strong>: A display cache of your profile, age confirmation, and preferences</li>
   </ul>
 
   <h3>1.3 Chat Messages</h3>
   <p>
-    Messages exchanged between users are transmitted in real-time via encrypted WebSocket connections (Socket.io with TLS). Messages are <strong>not permanently stored</strong> on our servers by default. Session messages exist only during the active connection. We do not read, analyze, or sell your private conversations.
+    The current chat screen contains demo conversations and simulated replies. Do not use it to send sensitive information. Demo messages are not end-to-end encrypted and are not saved as chat history.
   </p>
 
   <h2>2. How We Use Information</h2>
   <ul>
     <li>To match you with other anonymous users based on district and interests</li>
-    <li>To enable real-time private messaging between consenting adults</li>
+    <li>To provide profile creation and discovery between adults</li>
     <li>To enforce our 18+ age requirement and community safety policies</li>
     <li>To investigate reports of abuse or policy violations</li>
     <li>To improve our platform features and user experience (anonymized analytics only)</li>
@@ -73,10 +71,10 @@
 
   <h2>3. Data Storage & Security</h2>
   <p>
-    Your profile data is stored in a PostgreSQL database hosted on Neon.tech (EU-West region) with encryption at rest and in transit. All connections use TLS 1.3. We implement rate limiting, IP-based abuse prevention, and regular security audits.
+    Your email address, verified email status, self-declared 18+ confirmation, chosen anonymous username, district, gender option, language, interests, and account timestamps are stored in a PostgreSQL database. Sign-in links expire after 15 minutes and can only be used once. Session cookies are HttpOnly and, in production, Secure and SameSite=Lax. Sign-in requests are rate limited; a keyed hash of the requesting IP address is retained with sign-in-link records for up to about one hour, until the hourly expiry cleanup runs. Email delivery is handled by Resend.
   </p>
   <p>
-    Profile information you create (username, district, interests) is stored in <strong>localStorage</strong> on your device. This data never leaves your device unless you actively interact with the platform. Clearing your browser data effectively "deletes" your profile from your device.
+    A copy of your profile is cached in browser localStorage for display; the server database is the source of truth. Clearing browser data signs out the local display but does not delete your account. Use Delete My Account in Settings to request deletion.
   </p>
 
   <h2>4. Data Sharing</h2>
@@ -94,7 +92,7 @@
 
   <h2>6. Cookies & Local Storage</h2>
   <p>
-    We use <strong>localStorage</strong> (not traditional cookies) to store your age verification status, profile data, and preferences. No third-party tracking cookies are used. We do not use Google Analytics or any external analytics that track you across sites.
+    The API uses a first-party HttpOnly session cookie to keep you signed in. The browser also caches the displayed profile, age-confirmation flag, and preferences in localStorage. No third-party tracking cookies are used. We do not use Google Analytics or cross-site advertising trackers.
   </p>
 
   <h2>7. Age Verification</h2>
@@ -104,7 +102,7 @@
 
   <h2>8. Anonymous Mode</h2>
   <p>
-    When "Anonymous Mode" is enabled in Settings, your online status is hidden from all other users, and you will not appear in discovery results. You can still send and receive messages, but your presence is invisible.
+    When "Anonymous Mode" is enabled in Settings, the preference is stored in your browser; it is not yet enforced by the server-side discovery API.
   </p>
 
   <h2>9. Children's Privacy</h2>

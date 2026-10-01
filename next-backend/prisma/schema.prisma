@@ -2,8 +2,9 @@
 // Learn more: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -12,14 +13,18 @@ generator client {
 
 // ── User ──────────────────────────────────────────────────────────────────────
 model User {
-  id            String        @id @default(uuid())
-  generatedName String        @unique
-  district      String?
-  gender        String?
-  language      String?       @default("en")
-  isOnline      Boolean       @default(true)
-  lastSeen      DateTime      @default(now()) @updatedAt
-  createdAt     DateTime      @default(now())
+  id              String    @id @default(uuid())
+  generatedName   String    @unique
+  email           String?   @unique
+  emailVerifiedAt DateTime?
+  ageConfirmedAt  DateTime?
+  profileComplete Boolean   @default(false)
+  district        String?
+  gender          String?
+  language        String?   @default("en")
+  isOnline        Boolean   @default(true)
+  lastSeen        DateTime  @default(now()) @updatedAt
+  createdAt       DateTime  @default(now())
 
   // Relations
   interests       UserInterest[]
@@ -30,9 +35,37 @@ model User {
   reportsReceived Report[]       @relation("Reported")
   blockedUsers    Block[]        @relation("Blocker")
   blockedBy       Block[]        @relation("Blocked")
+  authSessions    AuthSession[]
 
   @@index([district])
   @@index([isOnline])
+}
+
+model EmailLoginLink {
+  id             String    @id @default(uuid())
+  email          String
+  tokenHash      String    @unique
+  ipHash         String?
+  ageConfirmedAt DateTime
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime
+  usedAt         DateTime?
+
+  @@index([email, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([expiresAt])
+}
+
+model AuthSession {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
 }
 
 // ── Interest ──────────────────────────────────────────────────────────────────
@@ -44,7 +77,7 @@ model Interest {
 
 // ── UserInterest (join table) ─────────────────────────────────────────────────
 model UserInterest {
-  user       User     @relation(fields: [userId],     references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
   interest   Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
   interestId String
@@ -54,14 +87,14 @@ model UserInterest {
 
 // ── ChatSession ───────────────────────────────────────────────────────────────
 model ChatSession {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   user1Id   String
   user2Id   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user1    User      @relation("SessionUser1", fields: [user1Id], references: [id])
-  user2    User      @relation("SessionUser2", fields: [user2Id], references: [id])
+  user1    User      @relation("SessionUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2    User      @relation("SessionUser2", fields: [user2Id], references: [id], onDelete: Cascade)
   messages Message[]
 
   @@unique([user1Id, user2Id])
@@ -72,16 +105,16 @@ model ChatSession {
 
 // ── Message ───────────────────────────────────────────────────────────────────
 model Message {
-  id        String      @id @default(uuid())
+  id        String    @id @default(uuid())
   sessionId String
   senderId  String
-  text      String      @db.Text
-  isRead    Boolean     @default(false)
+  text      String    @db.Text
+  isRead    Boolean   @default(false)
   readAt    DateTime?
-  createdAt DateTime    @default(now())
+  createdAt DateTime  @default(now())
 
   session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  sender  User        @relation(fields: [senderId],  references: [id], onDelete: Cascade)
+  sender  User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([sessionId, createdAt])
   @@index([senderId])
@@ -89,13 +122,13 @@ model Message {
 
 // ── Report ────────────────────────────────────────────────────────────────────
 model Report {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   reporterId String
   reportedId String
-  reason     String   // HARASSMENT | SPAM | INAPPROPRIATE | UNDERAGE | OTHER
-  details    String?  @db.Text
-  status     String   @default("PENDING") // PENDING | REVIEWED | ACTIONED | DISMISSED
-  createdAt  DateTime @default(now())
+  reason     String // HARASSMENT | SPAM | INAPPROPRIATE | UNDERAGE | OTHER
+  details    String?   @db.Text
+  status     String    @default("PENDING") // PENDING | REVIEWED | ACTIONED | DISMISSED
+  createdAt  DateTime  @default(now())
   reviewedAt DateTime?
 
   reporter User @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)

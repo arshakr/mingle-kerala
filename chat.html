@@ -72,7 +72,7 @@
       <!-- Messages Area -->
       <div class="messages-area" id="messagesArea">
         <div class="encrypted-notice">
-          🔐 End-to-end encrypted · Messages are private
+          Demo conversation · Messages are not end-to-end encrypted or saved
         </div>
 
         <div class="date-separator">
@@ -160,14 +160,16 @@
 
 <div id="toast-container"></div>
 
-<!-- Socket.io (from CDN — replace with Render URL in production) -->
+<!-- Socket.io client -->
 <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 <script src="js/utils.js"></script>
 <script>
   window.requireAuth('login.html');
 
   const me = window.getUser();
-  const RENDER_URL = 'https://YOUR-RENDER-URL.onrender.com'; // ← replace with actual URL
+  const SOCKET_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'http://localhost:3002'
+    : 'https://api.minglekerala.in';
 
   // Mock conversations
   const CONVOS = window.MOCK_USERS.slice(0, 6).map((u, i) => ({
@@ -194,7 +196,7 @@
   // ── Socket.io setup (graceful degradation if offline) ──
   let socket;
   try {
-    socket = io(RENDER_URL, {
+    socket = io(SOCKET_URL, {
       transports: ['websocket'],
       reconnectionAttempts: 3,
       timeout: 5000,
@@ -273,7 +275,7 @@
 
     const area = document.getElementById('messagesArea');
     area.innerHTML = `
-      <div class="encrypted-notice">🔐 End-to-end encrypted · Messages are private</div>
+      <div class="encrypted-notice">Demo conversation · Messages are not end-to-end encrypted or saved</div>
       <div class="date-separator">
         <div class="date-separator-line"></div>
         <div class="date-separator-text">Today</div>

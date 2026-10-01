@@ -125,16 +125,16 @@
     districtFilters.appendChild(chip);
   });
 
-  // Online badge count
-  document.getElementById('onlineCountBadge').textContent = window.MOCK_USERS.filter(u => u.online).length;
+  let discoveredUsers = [];
 
   function applyFilters() {
-    let users = [...window.MOCK_USERS];
+    let users = [...discoveredUsers];
     if (filters.online)    users = users.filter(u => u.online);
     if (filters.district)  users = users.filter(u => u.district === filters.district);
     if (filters.gender)    users = users.filter(u => u.gender === filters.gender);
     if (filters.interest)  users = users.filter(u => u.interests.includes(filters.interest));
     renderResults(users);
+    document.getElementById('onlineCountBadge').textContent = discoveredUsers.filter(u => u.online).length;
   }
 
   function renderResults(users) {
@@ -165,7 +165,14 @@
     window.initScrollReveal();
   }
 
-  applyFilters();
+  document.getElementById('discoverGrid').textContent = 'Loading profiles…';
+  window.apiFetch('/api/users').then(({ users }) => {
+    discoveredUsers = users;
+    applyFilters();
+  }).catch((error) => {
+    document.getElementById('discoverGrid').textContent = error.message;
+    window.showToast('Could not load profiles. Please refresh to try again.', 'error');
+  });
 
   // Single-select helper
   function setupSingleSelect(container, key) {

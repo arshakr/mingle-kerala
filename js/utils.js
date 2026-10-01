@@ -150,12 +150,61 @@ window.requireAuth = function(redirect = 'login.html') {
     window.location.href = redirect;
     return false;
   }
+  window.apiFetch('/api/auth/me').then(({ user }) => {
+    if (!user.profileComplete) {
+      window.storage.remove('mk_user');
+      window.location.href = redirect;
+      return;
+    }
+    window.storage.set('mk_user', user);
+  }).catch((error) => {
+    if (error.status === 401 || error.status === 403) {
+      window.storage.remove('mk_user');
+      window.location.href = redirect;
+      return;
+    }
+    console.error('[Auth] Could not validate the session:', error);
+    window.showToast('Could not verify your sign-in. Please check your connection.', 'error');
+  });
   return true;
 };
 
-window.logout = function() {
-  try { localStorage.removeItem('mk_user'); } catch {}
-  window.navigateTo('index.html');
+window.logout = async function() {
+  try {
+    await window.apiFetch('/api/auth/logout', { method: 'POST' });
+    window.storage.remove('mk_user');
+    window.navigateTo('index.html');
+  } catch (error) {
+    console.error('[Auth] Could not revoke the server session:', error);
+    window.showToast('Could not sign out securely. Please try again.', 'error');
+  }
+};
+
+window.API_BASE_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  ? `http://${window.location.hostname}:3002`
+  : 'https://api.minglekerala.in';
+
+window.apiFetch = async function(path, options = {}) {
+  const headers = new Headers(options.headers || {});
+  let body = options.body;
+  if (body && typeof body !== 'string' && !(body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+    body = JSON.stringify(body);
+  }
+  const response = await fetch(`${window.API_BASE_URL}${path}`, {
+    ...options,
+    body,
+    headers,
+    credentials: 'include',
+  });
+  if (response.status === 204) return null;
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data.error || `Request failed (${response.status}).`);
+    error.status = response.status;
+    throw error;
+  }
+  return data;
 };
 
 /* ── Safe LocalStorage ───────────────────────────────────── */

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Verify Sign-In — Mingle Kerala</title>
+  <link rel="stylesheet" href="css/global.css" />
+  <style>
+    body { min-height:100vh; display:grid; place-items:center; padding:24px; }
+    main { width:100%; max-width:480px; padding:32px; text-align:center; }
+    #verifyMessage { min-height:3em; }
+  </style>
+</head>
+<body>
+  <main class="glass">
+    <div class="text-gradient" style="font-weight:800;font-size:1.2rem;margin-bottom:20px">Mingle Kerala</div>
+    <h1 style="font-size:1.6rem;margin-bottom:12px">Confirm your sign-in</h1>
+    <p id="verifyMessage" class="text-secondary">This secure link can only be used once and expires after 15 minutes.</p>
+    <button class="btn btn-primary w-full mt-16" id="continueSignIn" type="button" disabled>Continue to Mingle Kerala</button>
+    <a class="btn btn-ghost w-full mt-16" href="login.html">Back to sign in</a>
+  </main>
+  <script>
+    'use strict';
+
+    const message = document.getElementById('verifyMessage');
+    const button = document.getElementById('continueSignIn');
+    const apiBase = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+      ? `http://${window.location.hostname}:3002`
+      : 'https://api.minglekerala.in';
+    const token = new URLSearchParams(window.location.hash.slice(1)).get('token');
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+
+    if (token && /^[A-Za-z0-9_-]{40,64}$/.test(token)) {
+      button.disabled = false;
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        message.textContent = 'Verifying your sign-in…';
+        try {
+          const response = await fetch(`${apiBase}/api/auth/verify`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'This link has expired. Request another sign-in link.');
+          const redirect = new URL(result.redirect);
+          if (redirect.origin !== window.location.origin) throw new Error('The sign-in service returned an invalid redirect.');
+          window.location.replace(redirect.href);
+        } catch (error) {
+          message.textContent = error.message;
+          button.disabled = false;
+        }
+      });
+    } else {
+      message.textContent = 'This sign-in link is missing or invalid. Request a new one.';
+    }
+  </script>
+</body>
+</html>
