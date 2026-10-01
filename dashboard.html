@@ -181,44 +181,19 @@
     document.getElementById('sidebarDistrict').textContent = '📍 ' + (user.district || 'Kerala');
   }
 
-  // Online count
-  const onlineUsers = window.MOCK_USERS.filter(u => u.online).length;
-  document.getElementById('onlineCount').textContent = onlineUsers + 17; // add some buffer
-
-  // Nearby users (same district)
   const nearbyRow = document.getElementById('nearbyRow');
-  const nearbyUsers = user
-    ? window.MOCK_USERS.filter(u => u.district === user.district).slice(0, 8)
-    : window.MOCK_USERS.slice(0, 8);
-
-  const allNearby = nearbyUsers.length > 0 ? nearbyUsers : window.MOCK_USERS.slice(0, 8);
-
-  allNearby.forEach(u => {
-    const card = document.createElement('div');
-    card.className = 'user-card-compact';
-    card.innerHTML = `
-      <div class="compact-avatar" style="background:${window.getAvatarGradient(u.name)}">
-        ${u.name.charAt(0)}
-        <span class="online-dot${u.online ? '' : ' offline'}" style="position:absolute;bottom:1px;right:1px;border:2px solid var(--bg-base)"></span>
-      </div>
-      <div class="compact-name">${u.name}</div>
-      <div class="compact-district">📍 ${u.district}</div>
-      <button class="btn btn-primary btn-sm w-full">💬 Chat</button>
-    `;
-    card.querySelector('button').addEventListener('click', () => {
-      window.storage.set('mk_chat_peer', u);
-      window.navigateTo('chat.html');
-    });
-    nearbyRow.appendChild(card);
-  });
-
-  // Discover grid
   let currentFilter = 'all';
   const discoverGrid = document.getElementById('discoverGrid');
+  let discoveredUsers = [];
+
+  function startChatWith(peer) {
+    window.storage.set('mk_chat_peer', peer);
+    window.navigateTo('chat.html');
+  }
 
   function renderDiscoverGrid(filter) {
     discoverGrid.innerHTML = '';
-    let users = [...window.MOCK_USERS];
+    let users = [...discoveredUsers];
 
     if (filter === 'online') users = users.filter(u => u.online);
     else if (filter === 'district' && user) users = users.filter(u => u.district === user.district);
@@ -227,18 +202,15 @@
       discoverGrid.innerHTML = `
         <div class="empty-state" style="grid-column:1/-1">
           <div class="empty-state-icon">😔</div>
-          <h3>No users found</h3>
-          <p>Try a different filter or check back later.</p>
+          <h3>No profiles to show yet</h3>
+          <p>Check back when more people join Mingle Kerala.</p>
         </div>
       `;
       return;
     }
 
     users.forEach((u, i) => {
-      const card = window.renderUserCard(u, (peer) => {
-        window.storage.set('mk_chat_peer', peer);
-        window.navigateTo('chat.html');
-      });
+      const card = window.renderUserCard(u, startChatWith);
       card.style.animationDelay = `${i * 0.05}s`;
       card.classList.add('reveal');
       discoverGrid.appendChild(card);
@@ -247,7 +219,42 @@
     window.initScrollReveal();
   }
 
-  renderDiscoverGrid('all');
+  function renderNearbyUsers(users) {
+    nearbyRow.innerHTML = '';
+    users.filter(u => u.district === user?.district).slice(0, 8).forEach(u => {
+      const card = document.createElement('div');
+      card.className = 'user-card-compact';
+      card.innerHTML = `
+        <div class="compact-avatar" style="background:${window.getAvatarGradient(u.name)}">
+          ${u.name.charAt(0)}
+          <span class="online-dot${u.online ? '' : ' offline'}" style="position:absolute;bottom:1px;right:1px;border:2px solid var(--bg-base)"></span>
+        </div>
+        <div class="compact-name">${u.name}</div>
+        <div class="compact-district">📍 ${u.district}</div>
+        <button class="btn btn-primary btn-sm w-full">💬 Chat</button>
+      `;
+      card.querySelector('button').addEventListener('click', () => startChatWith(u));
+      nearbyRow.appendChild(card);
+    });
+    if (!nearbyRow.childElementCount) {
+      nearbyRow.textContent = 'No one from your district has joined yet.';
+    }
+  }
+
+  window.apiFetch('/api/users').then(({ users }) => {
+    discoveredUsers = users;
+    renderDiscoverGrid(currentFilter);
+    renderNearbyUsers(users);
+  }).catch((error) => {
+    discoverGrid.textContent = error.message;
+    window.showToast('Could not load profiles. Please refresh to try again.', 'error');
+  });
+
+  window.apiFetch('/api/online-count').then(({ count }) => {
+    document.getElementById('onlineCount').textContent = count;
+  }).catch((error) => {
+    console.error('[Dashboard] Could not load online count:', error);
+  });
 
   // Filter chips
   document.querySelectorAll('.filter-chip').forEach(chip => {

@@ -218,13 +218,32 @@
 
   refreshUI();
 
-  // Regenerate username
-  document.getElementById('regenUsername').addEventListener('click', () => {
-    const newName = window.generateUsername();
-    user.name = newName;
+  async function saveProfile(updates = {}) {
+    const result = await window.apiFetch('/api/profile', {
+      method: 'PUT',
+      body: {
+        name: user.name,
+        district: user.district,
+        gender: user.gender || 'Other',
+        interests: user.interests || [],
+        language: user.lang || 'en',
+        ...updates,
+      },
+    });
+    user = result.user;
     window.storage.set('mk_user', user);
     refreshUI();
-    window.showToast(`New name: ${newName} 🎭`, 'success');
+  }
+
+  // Regenerate username
+  document.getElementById('regenUsername').addEventListener('click', async () => {
+    const newName = window.generateUsername();
+    try {
+      await saveProfile({ name: newName });
+      window.showToast(`New name: ${newName} 🎭`, 'success');
+    } catch (error) {
+      window.showToast(error.message, 'error');
+    }
   });
 
   // Change district modal
@@ -245,12 +264,14 @@
 
   document.getElementById('changeDistrictBtn').addEventListener('click', () => window.openModal('districtModal'));
 
-  document.getElementById('saveDistrictBtn').addEventListener('click', () => {
-    user.district = tempDistrict;
-    window.storage.set('mk_user', user);
-    refreshUI();
-    window.closeModal('districtModal');
-    window.showToast('District updated! 📍', 'success');
+  document.getElementById('saveDistrictBtn').addEventListener('click', async () => {
+    try {
+      await saveProfile({ district: tempDistrict });
+      window.closeModal('districtModal');
+      window.showToast('District updated! 📍', 'success');
+    } catch (error) {
+      window.showToast(error.message, 'error');
+    }
   });
 
   // Edit interests modal
@@ -279,13 +300,15 @@
 
   document.getElementById('editInterestsBtn').addEventListener('click', () => window.openModal('interestsModal'));
 
-  document.getElementById('saveInterestsBtn').addEventListener('click', () => {
+  document.getElementById('saveInterestsBtn').addEventListener('click', async () => {
     if (tempInterests.length === 0) { window.showToast('Pick at least one interest', 'warning'); return; }
-    user.interests = tempInterests;
-    window.storage.set('mk_user', user);
-    refreshUI();
-    window.closeModal('interestsModal');
-    window.showToast('Interests updated! 🎯', 'success');
+    try {
+      await saveProfile({ interests: tempInterests });
+      window.closeModal('interestsModal');
+      window.showToast('Interests updated! 🎯', 'success');
+    } catch (error) {
+      window.showToast(error.message, 'error');
+    }
   });
 
   // Privacy toggles (persist in localStorage)
@@ -316,11 +339,16 @@
   });
 
   // Delete account
-  document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+  document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
     if (confirm('Are you absolutely sure? This will permanently delete all your data.')) {
-      localStorage.clear();
-      window.showToast('Account deleted. Goodbye! 👋', 'info');
-      setTimeout(() => window.navigateTo('index.html'), 1500);
+      try {
+        await window.apiFetch('/api/profile', { method: 'DELETE' });
+        localStorage.clear();
+        window.showToast('Account deleted. Goodbye! 👋', 'info');
+        setTimeout(() => window.navigateTo('index.html'), 1000);
+      } catch (error) {
+        window.showToast(error.message, 'error');
+      }
     }
   });
 </script>

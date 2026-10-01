@@ -308,6 +308,24 @@
   </div>
 
   <div class="login-card">
+    <section id="authPanel">
+      <div class="step-title">✉️ Sign in with email</div>
+      <div class="step-desc">We’ll email you a secure, single-use link. Your address stays private and is never shown on your profile.</div>
+      <form id="emailSignInForm">
+        <div class="form-group">
+          <label for="emailAddress">Email address</label>
+          <input class="form-input" id="emailAddress" name="email" type="email" autocomplete="email" maxlength="254" required placeholder="you@example.com" />
+        </div>
+        <label style="display:flex;align-items:flex-start;gap:10px;margin:16px 0;color:var(--text-secondary);font-size:0.85rem">
+          <input id="ageConfirmation" type="checkbox" required style="margin-top:4px" />
+          <span>I confirm that I am 18 or older and agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</span>
+        </label>
+        <button class="btn btn-primary w-full" id="sendSignInLink" type="submit">Email me a sign-in link</button>
+      </form>
+      <p id="authMessage" class="text-secondary" role="status" aria-live="polite" style="margin-top:16px;font-size:0.85rem"></p>
+    </section>
+
+    <div id="profileSetup" hidden>
     <!-- Progress Dots -->
     <div class="step-progress">
       <div class="step-dot active" id="dot1"></div>
@@ -388,11 +406,6 @@
     window.location.href = 'age-verify.html';
   }
 
-  // If already logged in, go to dashboard
-  if (window.checkAuth()) {
-    window.location.href = 'dashboard.html';
-  }
-
   const INTERESTS = [
     '🎵 Music','🎬 Movies','🍛 Food','✈️ Travel','⚽ Sports',
     '📚 Books','🎮 Gaming','🎨 Art','🌿 Nature','💻 Tech',
@@ -404,6 +417,57 @@
   let selectedGender = '';
   let selectedInterests = [];
   let currentUsername = window.generateUsername();
+
+  const authPanel = document.getElementById('authPanel');
+  const profileSetup = document.getElementById('profileSetup');
+  const authMessage = document.getElementById('authMessage');
+
+  function showProfileSetup(user) {
+    authPanel.hidden = true;
+    profileSetup.hidden = false;
+    if (user?.name && !user.name.startsWith('NewMember')) {
+      currentUsername = user.name;
+      document.getElementById('usernameDisplay').textContent = currentUsername;
+    }
+    if (user?.district) selectedDistrict = user.district;
+  }
+
+  window.apiFetch('/api/auth/me').then(({ user }) => {
+    if (user.profileComplete) {
+      window.storage.set('mk_user', user);
+      window.location.replace('dashboard.html');
+      return;
+    }
+    window.storage.remove('mk_user');
+    showProfileSetup(user);
+  }).catch((error) => {
+    if (error.status === 401) {
+      window.storage.remove('mk_user');
+    } else {
+      authMessage.textContent = 'Sign-in is temporarily unavailable. Please try again shortly.';
+    }
+  });
+
+  document.getElementById('emailSignInForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = document.getElementById('sendSignInLink');
+    button.disabled = true;
+    authMessage.textContent = 'Sending your sign-in link…';
+    try {
+      const result = await window.apiFetch('/api/auth/link', {
+        method: 'POST',
+        body: {
+          email: document.getElementById('emailAddress').value,
+          ageConfirmed: document.getElementById('ageConfirmation').checked,
+        },
+      });
+      authMessage.textContent = result.message;
+    } catch (error) {
+      authMessage.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
 
   // Render district grid
   const districtGrid = document.getElementById('districtGrid');
@@ -502,24 +566,33 @@
   document.getElementById('step3Back').addEventListener('click', () => showStep(2));
 
   // Finish
-  document.getElementById('finishBtn').addEventListener('click', () => {
+  document.getElementById('finishBtn').addEventListener('click', async () => {
     if (selectedInterests.length === 0) {
       window.showToast('Pick at least one interest', 'warning');
       return;
     }
 
-    const user = {
-      id: 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-      name: currentUsername,
-      district: selectedDistrict,
-      gender: selectedGender,
-      interests: selectedInterests,
-      createdAt: new Date().toISOString(),
-    };
-
-    window.storage.set('mk_user', user);
-    window.showToast('Welcome to Mingle Kerala! 🌊', 'success');
-    setTimeout(() => window.navigateTo('dashboard.html'), 800);
+    const button = document.getElementById('finishBtn');
+    button.disabled = true;
+    try {
+      const result = await window.apiFetch('/api/profile', {
+        method: 'PUT',
+        body: {
+          name: currentUsername,
+          district: selectedDistrict,
+          gender: selectedGender || 'Other',
+          interests: selectedInterests,
+          language: 'en',
+        },
+      });
+      window.storage.set('mk_user', result.user);
+      window.showToast('Welcome to Mingle Kerala! 🌊', 'success');
+      setTimeout(() => window.navigateTo('dashboard.html'), 800);
+    } catch (error) {
+      window.showToast(error.message, 'error');
+    } finally {
+      button.disabled = false;
+    }
   });
 
   // Language toggle (demo)

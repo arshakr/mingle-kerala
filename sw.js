@@ -3,13 +3,14 @@
    Version: v1
    ============================================================ */
 
-const CACHE = 'mingle-kerala-v1';
+const CACHE = 'mingle-kerala-v4';
 
 const ASSETS = [
   './',
   './index.html',
   './age-verify.html',
   './login.html',
+  './verify.html',
   './dashboard.html',
   './discover.html',
   './chat.html',
@@ -32,7 +33,8 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) => {
-      return cache.addAll(ASSETS).catch((err) => {
+      const requests = ASSETS.map((asset) => new Request(asset, { cache: 'reload' }));
+      return cache.addAll(requests).catch((err) => {
         console.warn('[SW] Failed to cache some assets:', err);
       });
     })
@@ -67,6 +69,19 @@ self.addEventListener('fetch', (event) => {
   // Skip external CDN (socket.io, fonts, etc.)
   if (url.origin !== self.location.origin) {
     event.respondWith(fetch(event.request).catch(() => new Response('', { status: 503 })));
+    return;
+  }
+
+  if (event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response.ok && response.type === 'basic') {
+          const cloned = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(event.request, cloned));
+        }
+        return response;
+      }).catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+    );
     return;
   }
 
