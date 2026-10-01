@@ -147,11 +147,16 @@ function makePrisma() {
 let server;
 let baseUrl;
 let emailPayload;
-const originalFetch = global.fetch;
+let smtpFailure = false;
+let smtpTransportOptions;
 
 before(async () => {
   process.env.NODE_ENV = 'test';
-  process.env.RESEND_API_KEY = 'test-resend-key';
+  process.env.SMTP_HOST = 'smtp.gmail.com';
+  process.env.SMTP_PORT = '465';
+  process.env.SMTP_SECURE = 'true';
+  process.env.SMTP_USER = 'signin@example.test';
+  process.env.SMTP_PASS = 'test-app-password';
   process.env.EMAIL_FROM = 'Mingle Kerala <signin@example.test>';
   process.env.FRONTEND_URL = 'http://localhost:8081';
   process.env.AUTH_SECRET = 'test-auth-secret-longer-than-32-bytes';
@@ -161,6 +166,19 @@ before(async () => {
     if (request === '@prisma/client') {
       return { PrismaClient: function PrismaClient() { return makePrisma(); }, Prisma: {} };
     }
+    if (request === 'nodemailer') {
+      return {
+        createTransport(options) {
+          smtpTransportOptions = options;
+          return {
+            async sendMail(message) {
+              if (smtpFailure) throw Object.assign(new Error('SMTP delivery failed'), { code: 'ESMTP' });
+              emailPayload = message;
+            },
+          };
+        },
+      };
+    }
     return originalLoad.call(this, request, parent, isMain);
   };
   try {
@@ -169,18 +187,11 @@ before(async () => {
     Module._load = originalLoad;
   }
 
-  global.fetch = async (url, options) => {
-    if (url !== 'https://api.resend.com/emails') return originalFetch(url, options);
-    emailPayload = JSON.parse(options.body);
-    return new Response(null, { status: 200 });
-  };
-
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   baseUrl = `http://127.0.0.1:${server.address().port}`;
 });
 
 after(async () => {
-  global.fetch = originalFetch;
   await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
 });
 
@@ -202,7 +213,14 @@ test('email sign-in links are age gated, single use, and issue an HttpOnly sessi
   });
   assert.equal(sent.status, 202);
   assert.match((await sent.json()).message, /sign-in link will arrive/i);
-  assert.deepEqual(emailPayload.to, ['member@example.test']);
+  assert.equal(emailPayload.to, 'member@example.test');
+  assert.equal(emailPayload.from, 'Mingle Kerala <signin@example.test>');
+  assert.equal(emailPayload.subject, 'Your Mingle Kerala sign-in link');
+  assert.equal(smtpTransportOptions.host, 'smtp.gmail.com');
+  assert.equal(smtpTransportOptions.port, 465);
+  assert.equal(smtpTransportOptions.secure, true);
+  assert.equal(smtpTransportOptions.auth.user, 'signin@example.test');
+  assert.equal(smtpTransportOptions.auth.pass, 'test-app-password');
   assert.doesNotMatch(JSON.stringify(database.links), /token=[A-Za-z0-9_-]{30,}/);
 
   const token = emailPayload.text.match(/verify\.html#token=([A-Za-z0-9_-]{40,64})/)[1];
@@ -239,12 +257,24 @@ test('email sign-in links are age gated, single use, and issue an HttpOnly sessi
   assert.equal(replay.status, 410);
 });
 
+test('email sign-in is unavailable when SMTP credentials are incomplete', async () => {
+  const smtpPassword = process.env.SMTP_PASS;
+  process.env.SMTP_PASS = '';
+  try {
+    const response = await fetch(`${baseUrl}/api/auth/link`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'smtp-unconfigured@example.test', ageConfirmed: true }),
+    });
+    assert.equal(response.status, 503);
+    assert.equal(database.links.some((row) => row.email === 'smtp-unconfigured@example.test'), false);
+  } finally {
+    process.env.SMTP_PASS = smtpPassword;
+  }
+});
+
 test('failed email delivery invalidates the pending token and reports a provider error', async () => {
-  const workingFetch = global.fetch;
-  global.fetch = async (url, options) => {
-    if (url === 'https://api.resend.com/emails') return new Response(null, { status: 503 });
-    return originalFetch(url, options);
-  };
+  smtpFailure = true;
   try {
     const response = await fetch(`${baseUrl}/api/auth/link`, {
       method: 'POST',
@@ -255,7 +285,7 @@ test('failed email delivery invalidates the pending token and reports a provider
     const link = database.links.find((row) => row.email === 'delivery-failed@example.test');
     assert.ok(link.usedAt);
   } finally {
-    global.fetch = workingFetch;
+    smtpFailure = false;
   }
 });
 

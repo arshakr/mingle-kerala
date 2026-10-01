@@ -12,6 +12,7 @@ const http = require('node:http');
 const { Prisma, PrismaClient } = require('@prisma/client');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const server = http.createServer(app);
@@ -54,6 +55,23 @@ const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 const LOGIN_LINK_LIFETIME_MS = 15 * 60 * 1000;
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_SECRET = process.env.AUTH_SECRET || 'local-development-only-auth-secret';
+
+function smtpConfiguration() {
+  const port = Number(process.env.SMTP_PORT);
+  if (!process.env.SMTP_HOST || !Number.isInteger(port) || port < 1 || port > 65535 ||
+      !process.env.SMTP_USER || !process.env.SMTP_PASS || !process.env.EMAIL_FROM) {
+    return null;
+  }
+  return {
+    host: process.env.SMTP_HOST,
+    port,
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+  };
+}
 
 app.set('trust proxy', 1);
 app.use(cors({
@@ -189,7 +207,8 @@ app.post('/api/auth/link', async (request, response, next) => {
       response.status(400).json({ error: 'You must confirm that you are at least 18 years old.' });
       return;
     }
-    if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
+    const smtpOptions = smtpConfiguration();
+    if (!smtpOptions) {
       response.status(503).json({ error: 'Email sign-in is not configured yet. Please try again later.' });
       return;
     }
@@ -218,37 +237,20 @@ app.post('/api/auth/link', async (request, response, next) => {
     });
 
     const verificationUrl = `${FRONTEND_URL}/verify.html#token=${encodeURIComponent(token)}`;
-    let mailResponse;
     try {
-      mailResponse = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        signal: AbortSignal.timeout(10000),
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: process.env.EMAIL_FROM,
-          to: [email],
-          subject: 'Your Mingle Kerala sign-in link',
-          text: `Use this link to sign in to Mingle Kerala. It expires in 15 minutes and can only be used once:\n\n${verificationUrl}\n\nIf you did not request this link, you can ignore this email.`,
-        }),
+      const transporter = nodemailer.createTransport(smtpOptions);
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to: email,
+        subject: 'Your Mingle Kerala sign-in link',
+        text: `Use this link to sign in to Mingle Kerala. It expires in 15 minutes and can only be used once:\n\n${verificationUrl}\n\nIf you did not request this link, you can ignore this email.`,
       });
     } catch (error) {
       await prisma.emailLoginLink.update({
         where: { tokenHash: hash(token) },
         data: { usedAt: now },
       });
-      console.error(`[Auth] Sign-in email request failed (${error.name || 'network error'}).`);
-      response.status(502).json({ error: 'Could not send the sign-in email. Please try again later.' });
-      return;
-    }
-    if (!mailResponse.ok) {
-      await prisma.emailLoginLink.update({
-        where: { tokenHash: hash(token) },
-        data: { usedAt: now },
-      });
-      console.error(`[Auth] Resend rejected a sign-in email (HTTP ${mailResponse.status}).`);
+      console.error(`[Auth] SMTP sign-in email failed (${error.code || error.name || 'unknown error'}).`);
       response.status(502).json({ error: 'Could not send the sign-in email. Please try again later.' });
       return;
     }

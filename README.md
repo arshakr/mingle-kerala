@@ -15,7 +15,7 @@
 Mingle Kerala is a privacy-first anonymous social platform allowing adults 18+ from all 14 Kerala districts to connect, chat, and discover each other — without revealing real identities.
 
 **Current Features:**
-- ✉️ Email sign-in links with expiring, one-time tokens (Resend)
+- ✉️ Email sign-in links with expiring, one-time tokens (Gmail SMTP)
 - 🎭 Database-backed profiles with anonymous usernames
 - 🗺️ 14 Kerala district filter & discovery
 - 💬 Demo real-time chat preview (Socket.IO; not end-to-end encrypted or persisted)
@@ -48,14 +48,15 @@ cd mingle-kerala/next-backend
 npm install
 
 # Copy .env.example to .env and set DATABASE_URL, DIRECT_URL,
-# RESEND_API_KEY, EMAIL_FROM, and a random AUTH_SECRET.
+# SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, EMAIL_FROM,
+# and a random AUTH_SECRET. For Gmail, SMTP_PASS is a Google App Password.
 Copy-Item .env.example .env
 
 # Start the API and Socket.IO server
 npm run dev
 # Server runs on http://localhost:3002
 ```
-The local frontend at `http://localhost:8081` connects to the backend on port 3002. Email sign-in and profile APIs require working PostgreSQL and Resend credentials.
+The local frontend at `http://localhost:8081` connects to the backend on port 3002. Email sign-in and profile APIs require working PostgreSQL and SMTP credentials. Gmail SMTP requires 2-Step Verification and a Google App Password; use the same Gmail address for `SMTP_USER` and `EMAIL_FROM`.
 
 ---
 
@@ -110,7 +111,7 @@ mingle-kerala/
 
 ### 2. Backend → Render.com
 
-The root `render.yaml` defines the API service. Create a Blueprint in Render from the repository, add pooled `DATABASE_URL`, direct `DIRECT_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, and a cryptographically random `AUTH_SECRET` (at least 32 bytes) in the Render dashboard, and map `api.minglekerala.in` to the web service. Keep the secret values in the provider dashboards only.
+The root `render.yaml` defines the API service. Create a Blueprint in Render from the repository and add pooled `DATABASE_URL`, direct `DIRECT_URL`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`, and a cryptographically random `AUTH_SECRET` (at least 32 bytes) in the Render dashboard. Gmail SMTP uses `smtp.gmail.com`, port `465`, with secure TLS; `SMTP_PASS` must be a Google App Password (requires 2-Step Verification), not your normal Gmail password. Set `EMAIL_FROM` to the same Gmail address as `SMTP_USER`. Keep credentials in provider dashboards only. Gmail has sending limits and is not intended for bulk email.
 
 ### 3. Database → Neon.tech
 

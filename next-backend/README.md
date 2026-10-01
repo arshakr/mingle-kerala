@@ -4,7 +4,7 @@
 
 ## Local development
 
-Requires Node.js 18 or later.
+Requires Node.js 20 or later.
 
 ```bash
 npm install
@@ -18,9 +18,11 @@ The server listens on `http://localhost:3001` by default. Set `PORT` to override
 The repository root contains the Render Blueprint and GitHub Pages workflow. Production setup requires:
 
 - A pooled Neon PostgreSQL URL stored as Render's `DATABASE_URL` and a direct URL stored as `DIRECT_URL`.
-- A Resend API key stored as Render's `RESEND_API_KEY`.
-- A verified sender address stored as Render's `EMAIL_FROM`.
+- SMTP settings stored in Render: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, and `SMTP_PASS`.
+- A sender address stored as Render's `EMAIL_FROM`. For Gmail SMTP, use the same Gmail address as `SMTP_USER`.
 - A random secret of at least 32 bytes stored as Render's `AUTH_SECRET`.
 - DNS configured for `minglekerala.in` (frontend) and `api.minglekerala.in` (backend).
 
-The Render pre-deploy step pushes the Prisma schema to the configured database. No credentials belong in the repository.
+For Gmail, use `smtp.gmail.com`, port `465`, and secure TLS. `SMTP_USER` is your full Gmail address; `SMTP_PASS` is a Google App Password, not your normal account password. App Passwords require 2-Step Verification on the Google account. Set `EMAIL_FROM` to that same Gmail address (optionally formatted as `Mingle Kerala <you@gmail.com>`). Gmail has sending limits and is intended here as a small-project SMTP option, not a bulk mailing service.
+
+The Render pre-deploy step pushes the Prisma schema to the configured database. Store all credentials in the provider dashboard; never commit them to the repository.
