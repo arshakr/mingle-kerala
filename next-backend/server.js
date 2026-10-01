@@ -13,6 +13,7 @@ const { Prisma, PrismaClient } = require('@prisma/client');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+const { OAuth2Client } = require('google-auth-library');
 
 const app = express();
 const server = http.createServer(app);
@@ -32,6 +33,8 @@ const LOCAL_ORIGINS = [
 const FRONTEND_ORIGINS = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean)
+  .map((origin) => new URL(origin.trim()).origin)
   .filter(Boolean);
 const ALLOWED_ORIGINS = [...new Set([...LOCAL_ORIGINS, ...FRONTEND_ORIGINS])];
 const io = new Server(server, {
@@ -55,6 +58,7 @@ const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 const LOGIN_LINK_LIFETIME_MS = 15 * 60 * 1000;
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_SECRET = process.env.AUTH_SECRET || 'local-development-only-auth-secret';
+const googleOAuthClient = new OAuth2Client();
 
 function smtpConfiguration() {
   const port = Number(process.env.SMTP_PORT);
@@ -192,6 +196,79 @@ app.get('/health', async (_request, response, next) => {
   try {
     if (process.env.NODE_ENV === 'production') await prisma.$queryRaw`SELECT 1`;
     response.json({ status: 'ok', uptime: process.uptime() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/auth/config', (_request, response) => {
+  response.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+    emailEnabled: Boolean(smtpConfiguration()),
+  });
+});
+
+app.post('/api/auth/google', async (request, response, next) => {
+  try {
+    if (request.body.ageConfirmed !== true) {
+      response.status(400).json({ error: 'You must confirm that you are at least 18 years old.' });
+      return;
+    }
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      response.status(503).json({ error: 'Google sign-in is not configured yet. Please try again later.' });
+      return;
+    }
+    if (process.env.NODE_ENV === 'production' && Buffer.byteLength(AUTH_SECRET) < 32) {
+      response.status(503).json({ error: 'Sign-in is not configured yet. Please try again later.' });
+      return;
+    }
+    if (typeof request.body.credential !== 'string' || request.body.credential.length > 8192) {
+      response.status(400).json({ error: 'Google sign-in could not be verified. Please try again.' });
+      return;
+    }
+
+    let identity;
+    try {
+      const ticket = await googleOAuthClient.verifyIdToken({
+        idToken: request.body.credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      identity = ticket.getPayload();
+    } catch {
+      response.status(401).json({ error: 'Google sign-in could not be verified. Please try again.' });
+      return;
+    }
+    if (!identity?.sub || !identity.email || identity.email_verified !== true ||
+        !EMAIL_PATTERN.test(identity.email) || identity.email.length > 254) {
+      response.status(401).json({ error: 'A verified Google email is required to sign in.' });
+      return;
+    }
+
+    const now = new Date();
+    const sessionToken = crypto.randomBytes(32).toString('base64url');
+    const result = await prisma.$transaction(async (transaction) => {
+      const user = await transaction.user.upsert({
+        where: { email: identity.email.toLowerCase() },
+        update: { emailVerifiedAt: now, ageConfirmedAt: now, lastSeen: now },
+        create: {
+          email: identity.email.toLowerCase(),
+          emailVerifiedAt: now,
+          ageConfirmedAt: now,
+          generatedName: `NewMember${crypto.randomBytes(6).toString('hex')}`,
+        },
+      });
+      const session = await transaction.authSession.create({
+        data: {
+          tokenHash: hash(sessionToken),
+          userId: user.id,
+          expiresAt: new Date(now.getTime() + SESSION_LIFETIME_MS),
+        },
+      });
+      return { session, user };
+    });
+
+    response.setHeader('Set-Cookie', sessionCookie(sessionToken));
+    response.json({ user: publicProfile({ ...result.user, interests: [] }) });
   } catch (error) {
     next(error);
   }

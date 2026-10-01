@@ -182,7 +182,7 @@ window.logout = async function() {
 
 window.API_BASE_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
   ? `http://${window.location.hostname}:3002`
-  : 'https://api.minglekerala.in';
+  : 'https://mingle-kerala-api.onrender.com';
 
 window.apiFetch = async function(path, options = {}) {
   const headers = new Headers(options.headers || {});

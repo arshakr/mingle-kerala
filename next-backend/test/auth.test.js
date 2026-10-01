@@ -149,6 +149,9 @@ let baseUrl;
 let emailPayload;
 let smtpFailure = false;
 let smtpTransportOptions;
+let googleIdentityPayload;
+let googleVerificationFailure = false;
+let verifiedGoogleAudience;
 
 before(async () => {
   process.env.NODE_ENV = 'test';
@@ -158,8 +161,9 @@ before(async () => {
   process.env.SMTP_USER = 'signin@example.test';
   process.env.SMTP_PASS = 'test-app-password';
   process.env.EMAIL_FROM = 'Mingle Kerala <signin@example.test>';
-  process.env.FRONTEND_URL = 'http://localhost:8081';
+  process.env.FRONTEND_URL = 'http://localhost:8081,https://arshakr.github.io/mingle-kerala';
   process.env.AUTH_SECRET = 'test-auth-secret-longer-than-32-bytes';
+  process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
 
   const originalLoad = Module._load;
   Module._load = function(request, parent, isMain) {
@@ -179,6 +183,19 @@ before(async () => {
         },
       };
     }
+    if (request === 'google-auth-library') {
+      return {
+        OAuth2Client: class {
+          async verifyIdToken({ idToken, audience }) {
+            verifiedGoogleAudience = audience;
+            if (googleVerificationFailure || idToken !== 'valid-google-credential') {
+              throw new Error('Invalid ID token');
+            }
+            return { getPayload: () => googleIdentityPayload };
+          }
+        },
+      };
+    }
     return originalLoad.call(this, request, parent, isMain);
   };
   try {
@@ -189,10 +206,83 @@ before(async () => {
 
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   baseUrl = `http://127.0.0.1:${server.address().port}`;
+  googleIdentityPayload = {
+    sub: 'google-subject-123',
+    email: 'google-member@example.test',
+    email_verified: true,
+  };
 });
 
 after(async () => {
   await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+});
+
+test('Google sign-in validates Google identity and creates a secure app session', async () => {
+  const config = await fetch(`${baseUrl}/api/auth/config`);
+  assert.deepEqual(await config.json(), {
+    googleClientId: 'test-google-client-id',
+    emailEnabled: true,
+  });
+
+  const missingAge = await fetch(`${baseUrl}/api/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential: 'valid-google-credential' }),
+  });
+  assert.equal(missingAge.status, 400);
+
+  googleVerificationFailure = true;
+  const invalidCredential = await fetch(`${baseUrl}/api/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential: 'invalid-google-credential', ageConfirmed: true }),
+  });
+  assert.equal(invalidCredential.status, 401);
+  googleVerificationFailure = false;
+
+  const signedIn = await fetch(`${baseUrl}/api/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://arshakr.github.io' },
+    body: JSON.stringify({ credential: 'valid-google-credential', ageConfirmed: true }),
+  });
+  assert.equal(signedIn.status, 200);
+  assert.equal(signedIn.headers.get('access-control-allow-origin'), 'https://arshakr.github.io');
+  assert.equal(verifiedGoogleAudience, 'test-google-client-id');
+  const cookie = signedIn.headers.get('set-cookie');
+  assert.match(cookie, /HttpOnly/);
+  assert.match(cookie, /SameSite=Lax/);
+  const body = await signedIn.json();
+  assert.equal(body.user.profileComplete, false);
+  assert.equal('email' in body.user, false);
+  assert.equal(database.users.length, 1);
+  assert.equal(database.users[0].email, 'google-member@example.test');
+
+  const session = await fetch(`${baseUrl}/api/auth/me`, { headers: { Cookie: cookie.split(';')[0] } });
+  assert.equal(session.status, 200);
+  assert.equal((await session.json()).user.id, body.user.id);
+});
+
+test('Google sign-in rejects unverified email and requires configured client ID', async () => {
+  googleIdentityPayload = { sub: 'unverified-subject', email: 'unverified@example.test', email_verified: false };
+  const unverified = await fetch(`${baseUrl}/api/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential: 'valid-google-credential', ageConfirmed: true }),
+  });
+  assert.equal(unverified.status, 401);
+  assert.equal(database.users.some((row) => row.email === 'unverified@example.test'), false);
+
+  delete process.env.GOOGLE_CLIENT_ID;
+  const notConfigured = await fetch(`${baseUrl}/api/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential: 'valid-google-credential', ageConfirmed: true }),
+  });
+  assert.equal(notConfigured.status, 503);
+  assert.deepEqual(await (await fetch(`${baseUrl}/api/auth/config`)).json(), {
+    googleClientId: null,
+    emailEnabled: true,
+  });
 });
 
 test('email sign-in links are age gated, single use, and issue an HttpOnly session', async () => {
@@ -348,9 +438,10 @@ test('profiles persist, validate input, and are discoverable only after completi
 });
 
 test('profile writes enforce same-origin requests and sessions can be revoked', async () => {
-  const storedSession = database.sessions[0];
+  const signedInUser = database.users.find((row) => row.email === 'member@example.test');
+  const storedSession = database.sessions.find((row) => row.userId === signedInUser.id);
   assert.ok(storedSession);
-  const user = database.users.find((row) => row.id === storedSession.userId);
+  const user = signedInUser;
   assert.ok(user.profileComplete);
 
   const sessionCookie = globalThis.__testSessionCookie;

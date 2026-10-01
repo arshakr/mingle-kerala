@@ -15,7 +15,7 @@
 Mingle Kerala is a privacy-first anonymous social platform allowing adults 18+ from all 14 Kerala districts to connect, chat, and discover each other — without revealing real identities.
 
 **Current Features:**
-- ✉️ Email sign-in links with expiring, one-time tokens (Gmail SMTP)
+- 🔐 Google sign-in plus optional email sign-in links
 - 🎭 Database-backed profiles with anonymous usernames
 - 🗺️ 14 Kerala district filter & discovery
 - 💬 Demo real-time chat preview (Socket.IO; not end-to-end encrypted or persisted)
@@ -48,15 +48,15 @@ cd mingle-kerala/next-backend
 npm install
 
 # Copy .env.example to .env and set DATABASE_URL, DIRECT_URL,
-# SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, EMAIL_FROM,
-# and a random AUTH_SECRET. For Gmail, SMTP_PASS is a Google App Password.
+# GOOGLE_CLIENT_ID, a random AUTH_SECRET, and database URLs.
+# Google sign-in does not require email delivery or SMTP.
 Copy-Item .env.example .env
 
 # Start the API and Socket.IO server
 npm run dev
 # Server runs on http://localhost:3002
 ```
-The local frontend at `http://localhost:8081` connects to the backend on port 3002. Email sign-in and profile APIs require working PostgreSQL and SMTP credentials. Gmail SMTP requires 2-Step Verification and a Google App Password; use the same Gmail address for `SMTP_USER` and `EMAIL_FROM`.
+The local frontend at `http://localhost:8081` connects to the backend on port 3002. Google sign-in requires `GOOGLE_CLIENT_ID` and a working database. Email sign-in is optional and requires SMTP credentials. Gmail SMTP requires 2-Step Verification and a Google App Password; use the same Gmail address for `SMTP_USER` and `EMAIL_FROM`.
 
 ---
 
@@ -66,7 +66,7 @@ The local frontend at `http://localhost:8081` connects to the backend on port 30
 mingle-kerala/
 ├── index.html             ← Landing page (particles + rain animation)
 ├── age-verify.html        ← 18+ age gate
-├── login.html             ← Email sign-in + profile setup
+├── login.html             ← Google sign-in + profile setup
 ├── verify.html            ← One-time email link confirmation
 ├── dashboard.html         ← Main app feed
 ├── discover.html          ← Filter & browse users
@@ -111,9 +111,9 @@ mingle-kerala/
 
 ### 2. Backend → Render.com
 
-The root `render.yaml` defines the API service. Create a Blueprint in Render from the repository and add pooled `DATABASE_URL`, direct `DIRECT_URL`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`, and a cryptographically random `AUTH_SECRET` (at least 32 bytes) in the Render dashboard. Gmail SMTP uses `smtp.gmail.com`, port `465`, with secure TLS; `SMTP_PASS` must be a Google App Password (requires 2-Step Verification), not your normal Gmail password. Set `EMAIL_FROM` to the same Gmail address as `SMTP_USER`. Keep credentials in provider dashboards only. Gmail has sending limits and is not intended for bulk email.
+The root `render.yaml` defines a Free API service. Create a Blueprint in Render from the repository and add pooled `DATABASE_URL`, direct `DIRECT_URL`, `GOOGLE_CLIENT_ID`, and a cryptographically random `AUTH_SECRET` (at least 32 bytes) in the Render dashboard. Google sign-in is free and requires only a Google OAuth web client ID—no SMTP setup or client secret. Create a Web application OAuth client in Google Cloud Console and add `https://arshakr.github.io` under **Authorized JavaScript origins**. Store connection strings and secrets only in provider dashboards.
 
-**Render Free limitation:** Free web services block outbound traffic on SMTP ports `25`, `465`, and `587`, so Gmail SMTP cannot send from a Render Free service. Use a Render plan that permits SMTP egress or deploy the backend on a host that allows it. Free hosting with no custom sending domain may require a different email provider and setup.
+The production frontend connects to `https://mingle-kerala-api.onrender.com`. The Blueprint pushes the Prisma schema during build because Render Free doesn't support pre-deploy commands. Email sign-in is an optional fallback that requires SMTP credentials; Render Free blocks SMTP ports `25`, `465`, and `587`, so Google sign-in is the email-free option on the free plan.
 
 ### 3. Database → Neon.tech
 

@@ -57,6 +57,27 @@
       padding: 36px 32px;
     }
 
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      height: 1px;
+      flex: 1;
+      background: var(--border-glass);
+    }
+
+    #googleButton {
+      display: flex;
+      justify-content: center;
+      min-height: 44px;
+    }
+
     /* Step Progress */
     .step-progress {
       display: flex;
@@ -75,7 +96,6 @@
 
     .step-dot.active {
       background: var(--teal-glow);
-      box-shadow: 0 0 10px rgba(0,212,170,0.5);
       transform: scale(1.3);
     }
 
@@ -309,20 +329,33 @@
 
   <div class="login-card">
     <section id="authPanel">
-      <div class="step-title">✉️ Sign in with email</div>
-      <div class="step-desc">We’ll email you a secure, single-use link. Your address stays private and is never shown on your profile.</div>
-      <form id="emailSignInForm">
-        <div class="form-group">
-          <label for="emailAddress">Email address</label>
-          <input class="form-input" id="emailAddress" name="email" type="email" autocomplete="email" maxlength="254" required placeholder="you@example.com" />
-        </div>
+      <div class="step-title">Sign in to get started</div>
+      <div class="step-desc">Use your Google account for quick, secure sign-in. Your email is never shown on your profile.</div>
+      <div id="googleSignInSection" hidden>
         <label style="display:flex;align-items:flex-start;gap:10px;margin:16px 0;color:var(--text-secondary);font-size:0.85rem">
-          <input id="ageConfirmation" type="checkbox" required style="margin-top:4px" />
+          <input id="googleAgeConfirmation" type="checkbox" style="margin-top:4px" />
           <span>I confirm that I am 18 or older and agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</span>
         </label>
-        <button class="btn btn-primary w-full" id="sendSignInLink" type="submit">Email me a sign-in link</button>
-      </form>
-      <p id="authMessage" class="text-secondary" role="status" aria-live="polite" style="margin-top:16px;font-size:0.85rem"></p>
+        <div id="googleButton"></div>
+        <p id="googleMessage" class="text-secondary" role="status" aria-live="polite" style="margin-top:12px;font-size:0.85rem"></p>
+      </div>
+      <div id="emailDivider" class="auth-divider" hidden>or</div>
+      <section id="emailSignInSection" hidden>
+        <div class="step-title">✉️ Sign in with email</div>
+        <div class="step-desc">We’ll email you a secure, single-use link. Your address stays private and is never shown on your profile.</div>
+        <form id="emailSignInForm">
+          <div class="form-group">
+            <label for="emailAddress">Email address</label>
+            <input class="form-input" id="emailAddress" name="email" type="email" autocomplete="email" maxlength="254" required placeholder="you@example.com" />
+          </div>
+          <label style="display:flex;align-items:flex-start;gap:10px;margin:16px 0;color:var(--text-secondary);font-size:0.85rem">
+            <input id="ageConfirmation" type="checkbox" required style="margin-top:4px" />
+            <span>I confirm that I am 18 or older and agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</span>
+          </label>
+          <button class="btn btn-primary w-full" id="sendSignInLink" type="submit">Email me a sign-in link</button>
+        </form>
+        <p id="authMessage" class="text-secondary" role="status" aria-live="polite" style="margin-top:16px;font-size:0.85rem"></p>
+      </section>
     </section>
 
     <div id="profileSetup" hidden>
@@ -421,6 +454,7 @@
   const authPanel = document.getElementById('authPanel');
   const profileSetup = document.getElementById('profileSetup');
   const authMessage = document.getElementById('authMessage');
+  const googleMessage = document.getElementById('googleMessage');
 
   function showProfileSetup(user) {
     authPanel.hidden = true;
@@ -468,6 +502,92 @@
       button.disabled = false;
     }
   });
+
+  async function handleGoogleCredential(response) {
+    if (!document.getElementById('googleAgeConfirmation').checked) {
+      googleMessage.textContent = 'Please confirm that you are 18 or older before continuing.';
+      return;
+    }
+    googleMessage.textContent = 'Signing you in…';
+    try {
+      const result = await window.apiFetch('/api/auth/google', {
+        method: 'POST',
+        body: {
+          credential: response.credential,
+          ageConfirmed: true,
+        },
+      });
+      window.storage.set('mk_user', result.user);
+      if (result.user.profileComplete) {
+        window.location.replace('dashboard.html');
+        return;
+      }
+      showProfileSetup(result.user);
+    } catch (error) {
+      googleMessage.textContent = error.message;
+    }
+  }
+
+  let googleClientId = null;
+  let googleScriptFailed = false;
+
+  function renderGoogleButton() {
+    if (!googleClientId || !window.google?.accounts?.id) return;
+    const googleButton = document.getElementById('googleButton');
+    googleMessage.textContent = '';
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleGoogleCredential,
+    });
+    window.google.accounts.id.renderButton(googleButton, {
+      theme: 'outline',
+      size: 'large',
+      shape: 'pill',
+      text: 'continue_with',
+      width: Math.min(320, Math.max(200, googleButton.clientWidth)),
+    });
+  }
+
+  async function initializeAuth() {
+    try {
+      const config = await window.apiFetch('/api/auth/config');
+      googleClientId = config.googleClientId;
+      if (googleClientId) {
+        document.getElementById('googleSignInSection').hidden = false;
+        if (googleScriptFailed) {
+          googleMessage.textContent = 'Google sign-in could not load. Check your connection and try again.';
+        }
+        renderGoogleButton();
+      }
+      if (config.emailEnabled) {
+        document.getElementById('emailSignInSection').hidden = false;
+      }
+      if (config.googleClientId && config.emailEnabled) {
+        document.getElementById('emailDivider').hidden = false;
+      }
+      if (!config.googleClientId && !config.emailEnabled) {
+        authPanel.querySelector('.step-desc').textContent = 'Sign-in is not configured yet. Please try again later.';
+      }
+    } catch (error) {
+      document.getElementById('googleSignInSection').hidden = false;
+      googleMessage.textContent = error.message;
+    }
+  }
+
+  const googleScript = document.createElement('script');
+  googleScript.src = 'https://accounts.google.com/gsi/client';
+  googleScript.async = true;
+  googleScript.defer = true;
+  googleScript.onload = renderGoogleButton;
+  googleScript.onerror = () => {
+    googleScriptFailed = true;
+    if (googleClientId) {
+      document.getElementById('googleSignInSection').hidden = false;
+      googleMessage.textContent = 'Google sign-in could not load. Check your connection and try again.';
+    }
+  };
+  document.head.appendChild(googleScript);
+  initializeAuth();
 
   // Render district grid
   const districtGrid = document.getElementById('districtGrid');

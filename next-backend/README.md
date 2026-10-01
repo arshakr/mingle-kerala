@@ -15,16 +15,14 @@ The server listens on `http://localhost:3001` by default. Set `PORT` to override
 
 ## Deployment configuration
 
-The repository root contains the Render Blueprint and GitHub Pages workflow. Production setup requires:
+The repository root contains the Render Blueprint and GitHub Pages workflow. Google sign-in setup requires:
 
 - A pooled Neon PostgreSQL URL stored as Render's `DATABASE_URL` and a direct URL stored as `DIRECT_URL`.
-- SMTP settings stored in Render: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, and `SMTP_PASS`.
-- A sender address stored as Render's `EMAIL_FROM`. For Gmail SMTP, use the same Gmail address as `SMTP_USER`.
+- A Google OAuth web client ID stored as Render's `GOOGLE_CLIENT_ID`. Google sign-in does not require SMTP or a Google client secret.
 - A random secret of at least 32 bytes stored as Render's `AUTH_SECRET`.
-- DNS configured for `minglekerala.in` (frontend) and `api.minglekerala.in` (backend).
 
-For Gmail, use `smtp.gmail.com`, port `465`, and secure TLS. `SMTP_USER` is your full Gmail address; `SMTP_PASS` is a Google App Password, not your normal account password. App Passwords require 2-Step Verification on the Google account. Set `EMAIL_FROM` to that same Gmail address (optionally formatted as `Mingle Kerala <you@gmail.com>`). Gmail has sending limits and is intended here as a small-project SMTP option, not a bulk mailing service.
+To configure Google sign-in, create an OAuth client with application type **Web application** in Google Cloud Console. Add `https://arshakr.github.io` under **Authorized JavaScript origins** (also add `http://localhost:8081` for local testing). Copy the client ID (not a client secret) to `GOOGLE_CLIENT_ID` in Render and redeploy. The login page uses Google's Identity Services button; the backend verifies every ID token against this client ID before issuing its own session cookie.
 
-**Render Free limitation:** Free web services block outbound traffic on SMTP ports `25`, `465`, and `587`, so Gmail SMTP cannot send from a Render Free service. Use a Render plan that permits SMTP egress or host the backend somewhere that allows it.
+The Render Free Blueprint serves the API at `https://mingle-kerala-api.onrender.com`; the frontend uses this URL for production API calls. The Blueprint runs `prisma db push` during the build because Render Free doesn't support pre-deploy commands. Store database URLs and secrets in provider dashboards; never commit them to the repository.
 
-The Render pre-deploy step pushes the Prisma schema to the configured database. Store all credentials in the provider dashboard; never commit them to the repository.
+Email sign-in is an optional fallback. It needs SMTP credentials and an SMTP-capable host. Render Free blocks outbound SMTP ports `25`, `465`, and `587`, so Google sign-in is the email-free login method on that plan.
