@@ -3,7 +3,7 @@
    Version: v1
    ============================================================ */
 
-const CACHE = 'mingle-kerala-v4';
+const CACHE = 'mingle-kerala-v5';
 
 const ASSETS = [
   './',
@@ -66,9 +66,8 @@ self.addEventListener('fetch', (event) => {
   // Skip WebSocket / Socket.io requests — never cache these
   if (url.pathname.includes('/socket.io')) return;
 
-  // Skip external CDN (socket.io, fonts, etc.)
+  // Leave API and CDN requests to the browser so network failures remain visible.
   if (url.origin !== self.location.origin) {
-    event.respondWith(fetch(event.request).catch(() => new Response('', { status: 503 })));
     return;
   }
 
