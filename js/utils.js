@@ -191,12 +191,19 @@ window.apiFetch = async function(path, options = {}) {
     headers.set('Content-Type', 'application/json');
     body = JSON.stringify(body);
   }
-  const response = await fetch(`${window.API_BASE_URL}${path}`, {
-    ...options,
-    body,
-    headers,
-    credentials: 'include',
-  });
+  let response;
+  try {
+    response = await fetch(`${window.API_BASE_URL}${path}`, {
+      ...options,
+      body,
+      headers,
+      credentials: 'include',
+    });
+  } catch (cause) {
+    const error = new Error('The Mingle Kerala service is temporarily unavailable. Please try again later.');
+    error.cause = cause;
+    throw error;
+  }
   if (response.status === 204) return null;
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
