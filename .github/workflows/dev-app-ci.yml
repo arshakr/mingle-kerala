@@ -22,7 +22,7 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package.json
       - name: Install dependencies (temporary until lockfile committed)
-        run: npm install --no-audit --no-fund
+        run: npm install --legacy-peer-deps --no-audit --no-fund
       - name: Lint
         run: npm run lint
       - name: Type check
