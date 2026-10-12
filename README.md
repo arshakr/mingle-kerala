@@ -1,160 +1,37 @@
-# 🌊 Mingle Kerala
+# Mingle Kerala
 
-> Anonymous social discovery platform for Kerala adults 18+
+The live site and the new Next.js + Supabase DEV foundation are developed separately. DEV is not ready to replace production: authentication, invitation policies and chat remain future work.
 
-**Connect Anonymously. Stay Private.**
+| Path | Purpose |
+| --- | --- |
+| apps/web/ | Current DEV Next.js app and unit tests |
+| supabase/migrations/ | Forward-only DEV schema history |
+| supabase/tests/static/ | Migration source checks |
+| supabase/tests/database/ | pgTAP assertions |
+| docs/superpowers/ | Design and implementation plan |
+| docs/development/ | Cleanup audit |
+| Root HTML, css/, js/, assets/ | Retained live Pages frontend |
+| next-backend/ | Retained live Express/Socket.IO/Prisma backend |
 
-[![GitHub Pages](https://img.shields.io/badge/Frontend-GitHub%20Pages-blue?logo=github)](https://arshakr.github.io/mingle-kerala/)
-[![Render](https://img.shields.io/badge/Backend-Render.com-purple?logo=render)](https://render.com)
-[![Neon](https://img.shields.io/badge/Database-Neon.tech-green)](https://neon.tech)
+## Development
 
----
+Use Node 22+ and npm. From the root:
 
-## 📋 Overview
-
-Mingle Kerala is a privacy-first anonymous social platform allowing adults 18+ from all 14 Kerala districts to connect, chat, and discover each other — without revealing real identities.
-
-**Current Features:**
-- ✉️ Email sign-in links with expiring, one-time tokens (Resend)
-- 🎭 Database-backed profiles with anonymous usernames
-- 🗺️ 14 Kerala district filter & discovery
-- 💬 Demo real-time chat preview (Socket.IO; not end-to-end encrypted or persisted)
-- 🛡️ Safety center and emergency-exit UI (moderation flows are demo-only)
-- 🇮🇳 Malayalam language support
-- 📱 PWA — installable on mobile
-- 🌧️ Kerala monsoon rain animation
-- ✨ Dark glassmorphism UI
-
----
-
-## 🚀 Quick Start
-
-### Frontend (local preview)
-```bash
-# Option 1: VS Code Live Server
-# Open mingle-kerala/ in VS Code → Right-click index.html → Open with Live Server
-
-# Option 2: Python HTTP server
-cd mingle-kerala
-python -m http.server 8081 --bind 127.0.0.1
-# Open http://localhost:8081
-```
-
-### Backend (local dev)
-```bash
-cd mingle-kerala/next-backend
-
-# Install dependencies
-npm install
-
-# Copy .env.example to .env and set DATABASE_URL, DIRECT_URL,
-# RESEND_API_KEY, EMAIL_FROM, and a random AUTH_SECRET.
-Copy-Item .env.example .env
-
-# Start the API and Socket.IO server
+```sh
+npm ci --prefix apps/web
 npm run dev
-# Server runs on http://localhost:3002
-```
-The local frontend at `http://localhost:8081` connects to the backend on port 3002. Email sign-in and profile APIs require working PostgreSQL and Resend credentials.
-
----
-
-## 📁 Project Structure
-
-```
-mingle-kerala/
-├── index.html             ← Landing page (particles + rain animation)
-├── age-verify.html        ← 18+ age gate
-├── login.html             ← Email sign-in + profile setup
-├── verify.html            ← One-time email link confirmation
-├── dashboard.html         ← Main app feed
-├── discover.html          ← Filter & browse users
-├── chat.html              ← Real-time private chat
-├── settings.html          ← User preferences
-├── privacy.html           ← Privacy policy (Indian law compliant)
-├── terms.html             ← Terms of service
-├── safety.html            ← Safety center + emergency resources
-├── manifest.json          ← PWA manifest
-├── sw.js                  ← Service worker (offline support)
-├── css/
-│   ├── global.css         ← Design system, tokens, components
-│   ├── landing.css        ← Landing page styles
-│   ├── dashboard.css      ← App shell, sidebar, bottom tabs
-│   └── chat.css           ← Chat UI, bubbles, input
-├── js/
-│   ├── utils.js           ← Shared helpers (auth, toast, navigation)
-│   ├── particles.js       ← Canvas particle animation
-│   ├── rain.js            ← Kerala monsoon rain animation
-│   └── landing.js         ← Landing page interactivity
-├── assets/
-│   ├── icon-192.png       ← PWA icon
-│   └── icon-512.png       ← PWA icon (large)
-└── next-backend/
-    ├── server.js          ← Express + Socket.io server
-    ├── package.json
-    ├── .env.example       ← Environment template
-    ├── .gitignore
-    └── prisma/
-        └── schema.prisma  ← PostgreSQL schema (7 models)
+npm test
+npm run typecheck
+npm run lint
+npm run build
 ```
 
----
+Copy apps/web/.env.example to apps/web/.env.local when configuring the separate DEV project. Never expose server secrets through NEXT_PUBLIC_ variables. The foundation does not connect to Supabase yet.
 
-## 🌐 Deployment
+See [app setup](apps/web/README.md), [database checks](supabase/README.md), and [cleanup audit](docs/development/cleanup-2026-10-12.md).
 
-### 1. Frontend → GitHub Pages
+## Live deployment
 
-1. Push or merge the deployment configuration to `main`
-2. Enable **Settings → Pages → Build and deployment → Source: GitHub Actions**
-3. The workflow deploys the frontend to `https://minglekerala.in` using the included `CNAME`
+Root static files, CNAME, PWA files, the Pages deployment workflow, render.yaml and next-backend remain intact. Pages deploys main; Render uses next-backend. Keep these paths until the replacement passes preview, authentication, data-access and rollback checks. This cleanup does not deploy DEV or migrate hosted databases.
 
-### 2. Backend → Render.com
-
-The root `render.yaml` defines the API service. Create a Blueprint in Render from the repository, add pooled `DATABASE_URL`, direct `DIRECT_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, and a cryptographically random `AUTH_SECRET` (at least 32 bytes) in the Render dashboard, and map `api.minglekerala.in` to the web service. Keep the secret values in the provider dashboards only.
-
-### 3. Database → Neon.tech
-
-1. Create account at [neon.tech](https://neon.tech)
-2. Create a new PostgreSQL project
-3. Copy the **Connection String** (with `?sslmode=require`)
-4. Add Neon’s pooled connection URL as `DATABASE_URL` and its direct connection URL as `DIRECT_URL` in Render. The Render pre-deploy step applies the Prisma schema. Never commit connection strings or API credentials.
-
-### 4. Configure the custom domain
-
-The frontend expects `https://minglekerala.in` and the backend expects `https://api.minglekerala.in`. Configure the corresponding GitHub Pages and Render DNS records before enabling production traffic. Profile discovery requires email verification and a saved profile; the current chat screen still uses demo conversations and messages.
-
----
-
-## 🎨 Design System
-
-| Token | Value |
-|-------|-------|
-| `--teal-glow` | `#00d4aa` |
-| `--gold-glow` | `#f59e0b` |
-| `--purple-glow` | `#8b5cf6` |
-| `--pink-glow` | `#ec4899` |
-| `--bg-base` | `#050b12` |
-
-**Typography:** Inter (headings) + Noto Sans Malayalam (body)
-
----
-
-## 🛡️ Safety & Legal
-
-- Strict 18+ age verification gate
-- Anonymous-by-design (no PII collection)
-- Emergency exit button in all chat views
-- Report abuse system with reason categories
-- Compliant with Indian IT Act 2000 + DPDP Act 2023
-- In-app Safety Center with Kerala/India emergency numbers
-
----
-
-## 📜 License
-
-Private project. All rights reserved. © 2024 Mingle Kerala.
-
----
-
-*Made with ❤️ for Kerala* 🌧️☕
-# mingle-kerala
+The old README is preserved in [legacy reference](next-backend/LEGACY.md). Its feature/compliance claims are historical, not verified current behavior. Use next-backend/README.md for backend setup.

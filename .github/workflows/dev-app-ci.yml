@@ -3,10 +3,12 @@ on:
   push:
     branches:
       - feat/mingle-kerala-dev-*
+      - chore/development-cleanup-*
   pull_request:
     paths:
       - 'apps/web/**'
       - '.github/workflows/dev-app-ci.yml'
+      - 'package.json'
 permissions:
   contents: read
 jobs:
@@ -21,9 +23,9 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: apps/web/package.json
+          cache-dependency-path: apps/web/package-lock.json
       - name: Install
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Unit tests
         run: npm test
       - name: Static typecheck

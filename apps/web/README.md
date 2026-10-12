@@ -8,7 +8,7 @@ Requires Node 22+ and npm registry access.
 
 ```bash
 cd apps/web
-npm install
+npm ci
 npm run dev
 npm test
 npm run typecheck

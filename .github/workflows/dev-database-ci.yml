@@ -4,14 +4,15 @@ on:
   push:
     branches:
       - 'feat/mingle-kerala-dev-*'
+      - 'chore/development-cleanup-*'
     paths:
       - 'supabase/**'
-      - 'tests/migrations/**'
+      - 'package.json'
       - '.github/workflows/dev-database-ci.yml'
   pull_request:
     paths:
       - 'supabase/**'
-      - 'tests/migrations/**'
+      - 'package.json'
       - '.github/workflows/dev-database-ci.yml'
 
 permissions:
@@ -43,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Static schema tests
-        run: node --test tests/migrations/core.test.mjs
+        run: node --test supabase/tests/static/*.test.mjs
       - name: Prepare local-only Supabase auth stub
         run: |
           psql -v ON_ERROR_STOP=1 -c "CREATE SCHEMA auth; CREATE SCHEMA extensions;"

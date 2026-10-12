@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const source = () => readFileSync(new URL('../../supabase/migrations/202610120001_core.sql', import.meta.url), 'utf8');
+const source = () => readFileSync(new URL('../../migrations/202610120001_core.sql', import.meta.url), 'utf8');
 
 test('private DEV database defines 14 Kerala districts', () => {
   const sql = source();

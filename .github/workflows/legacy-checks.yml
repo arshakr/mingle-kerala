@@ -1,0 +1,26 @@
+name: Retained legacy backend checks
+on:
+  push:
+    branches:
+      - 'chore/development-cleanup-*'
+  pull_request:
+    paths:
+      - 'next-backend/**'
+      - '.github/workflows/legacy-checks.yml'
+permissions:
+  contents: read
+jobs:
+  auth-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: next-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: next-backend/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test

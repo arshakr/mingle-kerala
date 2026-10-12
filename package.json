@@ -1,0 +1,14 @@
+{
+  "name": "mingle-kerala-development",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix apps/web run dev",
+    "lint": "npm --prefix apps/web run lint",
+    "typecheck": "npm --prefix apps/web run typecheck",
+    "build": "npm --prefix apps/web run build",
+    "test": "npm --prefix apps/web test && npm run test:db",
+    "test:db": "node --test supabase/tests/static/*.test.mjs",
+    "test:legacy": "npm --prefix next-backend test"
+  },
+  "engines": { "node": ">=22.0.0" }
+}
