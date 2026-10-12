@@ -1,0 +1,35 @@
+name: Mingle Kerala DEV application checks
+on:
+  push:
+    branches: [feature/mingle-kerala-dev-nextjs]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/dev-app-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/web/package.json
+      - name: Install dependencies (temporary until lockfile committed)
+        run: npm install --no-audit --no-fund
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Build Next.js
+        run: npm run build
+      - name: Dependency-free baseline
+        run: npm run test:local
