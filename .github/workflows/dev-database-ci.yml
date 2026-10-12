@@ -1,0 +1,81 @@
+name: Mingle Kerala DEV database checks
+
+on:
+  push:
+    branches:
+      - 'feat/mingle-kerala-dev-*'
+    paths:
+      - 'supabase/**'
+      - 'tests/migrations/**'
+      - '.github/workflows/dev-database-ci.yml'
+  pull_request:
+    paths:
+      - 'supabase/**'
+      - 'tests/migrations/**'
+      - '.github/workflows/dev-database-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  schema-smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_PASSWORD: temporary-ci-password
+          POSTGRES_USER: postgres
+          POSTGRES_DB: mingle_dev_test
+        options: >-
+          --health-cmd "pg_isready -U postgres -d mingle_dev_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: temporary-ci-password
+      PGDATABASE: mingle_dev_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static schema tests
+        run: node --test tests/migrations/core.test.mjs
+      - name: Prepare local-only Supabase auth stub
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "CREATE SCHEMA auth; CREATE SCHEMA extensions;"
+          psql -v ON_ERROR_STOP=1 -c "CREATE TABLE auth.users (id uuid PRIMARY KEY);"
+      - name: Apply DEV schema against real PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/202610120001_core.sql
+      - name: Assert fourteen districts and default-deny RLS
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$
+          BEGIN
+            IF (SELECT count(*) FROM public.districts) <> 14 THEN
+              RAISE EXCEPTION 'Expected 14 districts';
+            END IF;
+            IF (SELECT count(*) FROM pg_class
+                WHERE oid IN (
+                  'public.districts'::regclass,
+                  'public.invitations'::regclass,
+                  'public.private_accounts'::regclass,
+                  'public.public_profiles'::regclass,
+                  'public.interests'::regclass,
+                  'public.profile_interests'::regclass,
+                  'public.discovery_preferences'::regclass)
+                AND relrowsecurity) <> 7 THEN
+              RAISE EXCEPTION 'RLS is not enabled on all foundation tables';
+            END IF;
+          END;
+          $$;
+          SQL
+      - name: Verify invalid district is rejected
+        run: |
+          if psql -v ON_ERROR_STOP=1 -c "INSERT INTO public.districts(id,slug,name) VALUES(15,'invalid','Invalid');"; then
+            echo 'Invalid district unexpectedly inserted'
+            exit 1
+          fi

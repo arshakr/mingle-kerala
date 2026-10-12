@@ -1,0 +1,2 @@
+# Separate Supabase development project only; do not link an existing production project.
+project_id = "mingle-kerala-dev"

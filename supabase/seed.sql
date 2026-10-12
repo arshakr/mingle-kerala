@@ -1,0 +1,3 @@
+-- District reference data is populated by migration 202610120001_core.sql.
+-- Use synthetic local-only tester fixtures after the OAuth invitation gate is implemented.
+-- Never seed real Google emails.
